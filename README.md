@@ -1,6 +1,5 @@
 # RPGClub API
 
-
 ## Stack
 
 - Ruby 3.4
