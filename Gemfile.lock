@@ -94,6 +94,8 @@ GEM
     debug (1.11.1)
       irb (~> 1.10)
       reline (>= 0.3.8)
+    dockerfile-rails (1.7.10)
+      rails (>= 3.0.0)
     dotenv (3.2.0)
     dotenv-rails (3.2.0)
       dotenv (= 3.2.0)
@@ -322,6 +324,7 @@ DEPENDENCIES
   brakeman
   bundler-audit
   debug
+  dockerfile-rails (>= 1.7)
   dotenv-rails (~> 3.2)
   faraday (~> 2.14)
   kamal
