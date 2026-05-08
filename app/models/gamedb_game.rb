@@ -115,7 +115,7 @@ class GamedbGame < ApplicationRecord
   validates :title, presence: true
 
   def as_json(options = nil)
-    super(options).merge(
+    super(options).except("total_rating").merge(
       "cover_url" => cover_url,
       "art_url" => art_url,
       "logo_url" => logo_url
