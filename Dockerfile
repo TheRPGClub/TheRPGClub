@@ -71,7 +71,7 @@ USER 1000:1000
 COPY --chown=rails:rails --from=build "${BUNDLE_PATH}" "${BUNDLE_PATH}"
 COPY --chown=rails:rails --from=build /rails /rails
 
-# Entrypoint prepares the database.
+# Database preparation runs through fly.toml's release_command.
 ENTRYPOINT ["/rails/bin/docker-entrypoint"]
 
 # Start the Rails server on Fly's internal service port by default.
