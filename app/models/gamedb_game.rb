@@ -15,6 +15,11 @@ class GamedbGame < ApplicationRecord
     foreign_key: :game_id,
     dependent: nil,
     inverse_of: :game
+  has_many :images,
+    class_name: "GamedbGameImage",
+    foreign_key: :game_id,
+    dependent: nil,
+    inverse_of: :game
   has_many :game_platforms,
     class_name: "GamedbGamePlatform",
     foreign_key: :game_id,
@@ -108,6 +113,38 @@ class GamedbGame < ApplicationRecord
   scope :without_images, -> { select(*SUMMARY_COLUMNS) }
 
   validates :title, presence: true
+
+  def as_json(options = nil)
+    super(options).merge(
+      "cover_url" => cover_url,
+      "art_url" => art_url,
+      "logo_url" => logo_url
+    )
+  end
+
+  def cover_url
+    primary_image_url("cover")
+  end
+
+  def art_url
+    primary_image_url("artwork")
+  end
+
+  def logo_url
+    primary_image_url("logo")
+  end
+
+  def primary_image_url(kind)
+    if images.loaded?
+      return images
+        .select { |image| image.kind == kind }
+        .sort_by { |image| [ image.is_primary ? 0 : 1, image.position.to_i, image.image_id.to_i ] }
+        .first
+        &.url
+    end
+
+    images.where(kind: kind).primary_first.first&.url
+  end
 
   def self.search(query)
     escaped = sanitize_sql_like(query.to_s.strip)

@@ -10,6 +10,20 @@ SET xmloption = content;
 SET client_min_messages = warning;
 SET row_security = off;
 
+--
+-- Name: public; Type: SCHEMA; Schema: -; Owner: -
+--
+
+CREATE SCHEMA public;
+
+
+--
+-- Name: SCHEMA public; Type: COMMENT; Schema: -; Owner: -
+--
+
+COMMENT ON SCHEMA public IS 'standard public schema';
+
+
 SET default_tablespace = '';
 
 SET default_table_access_method = heap;
@@ -192,6 +206,16 @@ CREATE TABLE public.gamedb_game_companies (
 
 
 --
+-- Name: gamedb_game_engines; Type: TABLE; Schema: public; Owner: -
+--
+
+CREATE TABLE public.gamedb_game_engines (
+    game_id bigint NOT NULL,
+    engine_id bigint NOT NULL
+);
+
+
+--
 -- Name: gamedb_game_franchises; Type: TABLE; Schema: public; Owner: -
 --
 
@@ -209,6 +233,43 @@ CREATE TABLE public.gamedb_game_genres (
     game_id bigint NOT NULL,
     genre_id bigint NOT NULL
 );
+
+
+--
+-- Name: gamedb_game_images; Type: TABLE; Schema: public; Owner: -
+--
+
+CREATE TABLE public.gamedb_game_images (
+    image_id bigint NOT NULL,
+    game_id bigint NOT NULL,
+    kind character varying(32) NOT NULL,
+    object_key character varying(512) NOT NULL,
+    uploaded_by_user_id character varying(30),
+    is_primary boolean DEFAULT false NOT NULL,
+    "position" integer DEFAULT 1 NOT NULL,
+    created_at timestamp(6) without time zone DEFAULT CURRENT_TIMESTAMP NOT NULL,
+    updated_at timestamp(6) without time zone DEFAULT CURRENT_TIMESTAMP NOT NULL,
+    CONSTRAINT ck_gamedb_game_images_kind CHECK (((kind)::text = ANY ((ARRAY['cover'::character varying, 'artwork'::character varying, 'logo'::character varying])::text[])))
+);
+
+
+--
+-- Name: gamedb_game_images_image_id_seq; Type: SEQUENCE; Schema: public; Owner: -
+--
+
+CREATE SEQUENCE public.gamedb_game_images_image_id_seq
+    START WITH 1
+    INCREMENT BY 1
+    NO MINVALUE
+    NO MAXVALUE
+    CACHE 1;
+
+
+--
+-- Name: gamedb_game_images_image_id_seq; Type: SEQUENCE OWNED BY; Schema: public; Owner: -
+--
+
+ALTER SEQUENCE public.gamedb_game_images_image_id_seq OWNED BY public.gamedb_game_images.image_id;
 
 
 --
@@ -284,7 +345,6 @@ CREATE TABLE public.gamedb_games (
     game_id bigint NOT NULL,
     title character varying(255) NOT NULL,
     description text,
-    image_data bytea,
     igdb_id bigint,
     slug character varying(255),
     total_rating numeric,
@@ -296,7 +356,6 @@ CREATE TABLE public.gamedb_games (
     collection_id bigint,
     parent_igdb_id bigint,
     parent_game_name character varying(255),
-    art_data bytea,
     thumbnail_bad boolean DEFAULT false NOT NULL,
     thumbnail_approved boolean DEFAULT false NOT NULL
 );
@@ -1550,7 +1609,8 @@ CREATE TABLE public.rpg_club_users (
     server_left_at timestamp(6) with time zone,
     donor_notify_on_claim boolean DEFAULT false NOT NULL,
     profile_image_at timestamp(6) with time zone,
-    profile_image bytea
+    profile_image bytea,
+    discord_avatar character varying(128)
 );
 
 
@@ -1619,11 +1679,167 @@ ALTER TABLE public.rpg_club_users_hist ALTER COLUMN history_id ADD GENERATED ALW
 
 
 --
+-- Name: rpg_club_xbox_collection_import_items; Type: TABLE; Schema: public; Owner: -
+--
+
+CREATE TABLE public.rpg_club_xbox_collection_import_items (
+    item_id bigint NOT NULL,
+    import_id bigint NOT NULL,
+    row_index bigint NOT NULL,
+    xbox_title_id character varying(40),
+    xbox_product_id character varying(80),
+    xbox_title_name character varying(500) NOT NULL,
+    raw_platform character varying(200),
+    raw_ownership_type character varying(60),
+    raw_note character varying(500),
+    raw_gamedb_id bigint,
+    raw_igdb_id bigint,
+    platform_id bigint,
+    ownership_type character varying(30),
+    note character varying(500),
+    status character varying(20) NOT NULL,
+    match_confidence character varying(20),
+    match_candidate_json text,
+    gamedb_game_id bigint,
+    collection_entry_id bigint,
+    result_reason character varying(40),
+    error_text character varying(2000),
+    CONSTRAINT ck_xbox_coll_items_reason CHECK (((result_reason IS NULL) OR ((result_reason)::text = ANY ((ARRAY['AUTO_MATCH'::character varying, 'XBOX_GAMEDB_ID'::character varying, 'XBOX_IGDB_ID'::character varying, 'MANUAL_REMAP'::character varying, 'DUPLICATE'::character varying, 'MANUAL_SKIP'::character varying, 'SKIP_MAPPED'::character varying, 'NO_CANDIDATE'::character varying, 'INVALID_REMAP'::character varying, 'PLATFORM_UNRESOLVED'::character varying, 'ADD_FAILED'::character varying, 'INVALID_ROW'::character varying])::text[])))),
+    CONSTRAINT ck_xbox_coll_items_status CHECK (((status)::text = ANY ((ARRAY['PENDING'::character varying, 'ADDED'::character varying, 'UPDATED'::character varying, 'SKIPPED'::character varying, 'FAILED'::character varying])::text[])))
+);
+
+
+--
+-- Name: rpg_club_xbox_collection_import_items_item_id_seq; Type: SEQUENCE; Schema: public; Owner: -
+--
+
+CREATE SEQUENCE public.rpg_club_xbox_collection_import_items_item_id_seq
+    START WITH 1
+    INCREMENT BY 1
+    NO MINVALUE
+    NO MAXVALUE
+    CACHE 1;
+
+
+--
+-- Name: rpg_club_xbox_collection_import_items_item_id_seq; Type: SEQUENCE OWNED BY; Schema: public; Owner: -
+--
+
+ALTER SEQUENCE public.rpg_club_xbox_collection_import_items_item_id_seq OWNED BY public.rpg_club_xbox_collection_import_items.item_id;
+
+
+--
+-- Name: rpg_club_xbox_collection_imports; Type: TABLE; Schema: public; Owner: -
+--
+
+CREATE TABLE public.rpg_club_xbox_collection_imports (
+    import_id bigint NOT NULL,
+    user_id character varying(30) NOT NULL,
+    status character varying(20) NOT NULL,
+    current_index bigint DEFAULT 0 NOT NULL,
+    total_count bigint DEFAULT 0 NOT NULL,
+    xuid character varying(30),
+    gamertag character varying(100),
+    source_type character varying(20) NOT NULL,
+    source_file_name character varying(255),
+    source_file_size bigint,
+    template_version character varying(20),
+    created_at timestamp(6) with time zone DEFAULT statement_timestamp() NOT NULL,
+    updated_at timestamp(6) with time zone DEFAULT statement_timestamp() NOT NULL,
+    CONSTRAINT ck_xbox_coll_imports_source CHECK (((source_type)::text = ANY ((ARRAY['API'::character varying, 'CSV'::character varying])::text[]))),
+    CONSTRAINT ck_xbox_coll_imports_status CHECK (((status)::text = ANY ((ARRAY['ACTIVE'::character varying, 'PAUSED'::character varying, 'COMPLETED'::character varying, 'CANCELED'::character varying])::text[])))
+);
+
+
+--
+-- Name: rpg_club_xbox_collection_imports_import_id_seq; Type: SEQUENCE; Schema: public; Owner: -
+--
+
+CREATE SEQUENCE public.rpg_club_xbox_collection_imports_import_id_seq
+    START WITH 1
+    INCREMENT BY 1
+    NO MINVALUE
+    NO MAXVALUE
+    CACHE 1;
+
+
+--
+-- Name: rpg_club_xbox_collection_imports_import_id_seq; Type: SEQUENCE OWNED BY; Schema: public; Owner: -
+--
+
+ALTER SEQUENCE public.rpg_club_xbox_collection_imports_import_id_seq OWNED BY public.rpg_club_xbox_collection_imports.import_id;
+
+
+--
+-- Name: rpg_club_xbox_title_gamedb_map; Type: TABLE; Schema: public; Owner: -
+--
+
+CREATE TABLE public.rpg_club_xbox_title_gamedb_map (
+    map_id bigint NOT NULL,
+    xbox_title_id character varying(40) NOT NULL,
+    gamedb_game_id bigint,
+    status character varying(20) NOT NULL,
+    created_by character varying(30),
+    created_at timestamp(6) with time zone DEFAULT statement_timestamp() NOT NULL,
+    updated_at timestamp(6) with time zone DEFAULT statement_timestamp() NOT NULL,
+    CONSTRAINT ck_xbox_title_gamedb_map_status CHECK (((status)::text = ANY ((ARRAY['MAPPED'::character varying, 'SKIPPED'::character varying])::text[])))
+);
+
+
+--
+-- Name: rpg_club_xbox_title_gamedb_map_map_id_seq; Type: SEQUENCE; Schema: public; Owner: -
+--
+
+CREATE SEQUENCE public.rpg_club_xbox_title_gamedb_map_map_id_seq
+    START WITH 1
+    INCREMENT BY 1
+    NO MINVALUE
+    NO MAXVALUE
+    CACHE 1;
+
+
+--
+-- Name: rpg_club_xbox_title_gamedb_map_map_id_seq; Type: SEQUENCE OWNED BY; Schema: public; Owner: -
+--
+
+ALTER SEQUENCE public.rpg_club_xbox_title_gamedb_map_map_id_seq OWNED BY public.rpg_club_xbox_title_gamedb_map.map_id;
+
+
+--
 -- Name: schema_migrations; Type: TABLE; Schema: public; Owner: -
 --
 
 CREATE TABLE public.schema_migrations (
     version character varying NOT NULL
+);
+
+
+--
+-- Name: thread_game_links; Type: TABLE; Schema: public; Owner: -
+--
+
+CREATE TABLE public.thread_game_links (
+    thread_id character varying(50) NOT NULL,
+    gamedb_game_id bigint NOT NULL,
+    linked_at timestamp(6) with time zone DEFAULT statement_timestamp() NOT NULL
+);
+
+
+--
+-- Name: threads; Type: TABLE; Schema: public; Owner: -
+--
+
+CREATE TABLE public.threads (
+    thread_id character varying(30) NOT NULL,
+    forum_channel_id character varying(30) NOT NULL,
+    thread_name character varying(200) NOT NULL,
+    gamedb_game_id bigint,
+    is_archived character varying(1) DEFAULT 'N'::character varying NOT NULL,
+    created_at timestamp(6) with time zone DEFAULT statement_timestamp() NOT NULL,
+    last_seen_at timestamp(6) with time zone,
+    skip_linking character varying(1) DEFAULT 'N'::character varying NOT NULL,
+    CONSTRAINT ck_threads_is_archived CHECK (((is_archived)::text = ANY ((ARRAY['Y'::character varying, 'N'::character varying])::text[]))),
+    CONSTRAINT ck_threads_skip_linking CHECK (((skip_linking)::text = ANY ((ARRAY['Y'::character varying, 'N'::character varying])::text[])))
 );
 
 
@@ -1689,6 +1905,160 @@ ALTER TABLE public.user_game_completions ALTER COLUMN completion_id ADD GENERATE
     NO MAXVALUE
     CACHE 20
 );
+
+
+--
+-- Name: user_now_playing; Type: TABLE; Schema: public; Owner: -
+--
+
+CREATE TABLE public.user_now_playing (
+    entry_id bigint NOT NULL,
+    user_id character varying(30) NOT NULL,
+    gamedb_game_id bigint,
+    platform_id bigint,
+    added_at timestamp(6) with time zone DEFAULT statement_timestamp() NOT NULL,
+    note character varying(500),
+    sort_order bigint,
+    note_updated_at timestamp(6) with time zone
+);
+
+
+--
+-- Name: user_now_playing_entry_id_seq; Type: SEQUENCE; Schema: public; Owner: -
+--
+
+CREATE SEQUENCE public.user_now_playing_entry_id_seq
+    START WITH 1
+    INCREMENT BY 1
+    NO MINVALUE
+    NO MAXVALUE
+    CACHE 1;
+
+
+--
+-- Name: user_now_playing_entry_id_seq; Type: SEQUENCE OWNED BY; Schema: public; Owner: -
+--
+
+ALTER SEQUENCE public.user_now_playing_entry_id_seq OWNED BY public.user_now_playing.entry_id;
+
+
+--
+-- Name: user_reminders; Type: TABLE; Schema: public; Owner: -
+--
+
+CREATE TABLE public.user_reminders (
+    reminder_id bigint NOT NULL,
+    user_id character varying(32) NOT NULL,
+    remind_at timestamp(6) with time zone NOT NULL,
+    content character varying(400) NOT NULL,
+    sent_at timestamp(6) with time zone,
+    is_noisy boolean DEFAULT false NOT NULL,
+    failure_count bigint DEFAULT 0 NOT NULL,
+    failed_at timestamp(6) with time zone,
+    created_at timestamp(6) with time zone DEFAULT statement_timestamp() NOT NULL,
+    updated_at timestamp(6) with time zone DEFAULT statement_timestamp() NOT NULL
+);
+
+
+--
+-- Name: user_reminders_reminder_id_seq; Type: SEQUENCE; Schema: public; Owner: -
+--
+
+CREATE SEQUENCE public.user_reminders_reminder_id_seq
+    START WITH 1
+    INCREMENT BY 1
+    NO MINVALUE
+    NO MAXVALUE
+    CACHE 1;
+
+
+--
+-- Name: user_reminders_reminder_id_seq; Type: SEQUENCE OWNED BY; Schema: public; Owner: -
+--
+
+ALTER SEQUENCE public.user_reminders_reminder_id_seq OWNED BY public.user_reminders.reminder_id;
+
+
+--
+-- Name: user_session_tokens; Type: TABLE; Schema: public; Owner: -
+--
+
+CREATE TABLE public.user_session_tokens (
+    id bigint NOT NULL,
+    token character varying NOT NULL,
+    user_id character varying NOT NULL,
+    expires_at timestamp(6) without time zone NOT NULL,
+    created_at timestamp(6) without time zone NOT NULL,
+    updated_at timestamp(6) without time zone NOT NULL
+);
+
+
+--
+-- Name: user_session_tokens_id_seq; Type: SEQUENCE; Schema: public; Owner: -
+--
+
+CREATE SEQUENCE public.user_session_tokens_id_seq
+    START WITH 1
+    INCREMENT BY 1
+    NO MINVALUE
+    NO MAXVALUE
+    CACHE 1;
+
+
+--
+-- Name: user_session_tokens_id_seq; Type: SEQUENCE OWNED BY; Schema: public; Owner: -
+--
+
+ALTER SEQUENCE public.user_session_tokens_id_seq OWNED BY public.user_session_tokens.id;
+
+
+--
+-- Name: gamedb_game_images image_id; Type: DEFAULT; Schema: public; Owner: -
+--
+
+ALTER TABLE ONLY public.gamedb_game_images ALTER COLUMN image_id SET DEFAULT nextval('public.gamedb_game_images_image_id_seq'::regclass);
+
+
+--
+-- Name: rpg_club_xbox_collection_import_items item_id; Type: DEFAULT; Schema: public; Owner: -
+--
+
+ALTER TABLE ONLY public.rpg_club_xbox_collection_import_items ALTER COLUMN item_id SET DEFAULT nextval('public.rpg_club_xbox_collection_import_items_item_id_seq'::regclass);
+
+
+--
+-- Name: rpg_club_xbox_collection_imports import_id; Type: DEFAULT; Schema: public; Owner: -
+--
+
+ALTER TABLE ONLY public.rpg_club_xbox_collection_imports ALTER COLUMN import_id SET DEFAULT nextval('public.rpg_club_xbox_collection_imports_import_id_seq'::regclass);
+
+
+--
+-- Name: rpg_club_xbox_title_gamedb_map map_id; Type: DEFAULT; Schema: public; Owner: -
+--
+
+ALTER TABLE ONLY public.rpg_club_xbox_title_gamedb_map ALTER COLUMN map_id SET DEFAULT nextval('public.rpg_club_xbox_title_gamedb_map_map_id_seq'::regclass);
+
+
+--
+-- Name: user_now_playing entry_id; Type: DEFAULT; Schema: public; Owner: -
+--
+
+ALTER TABLE ONLY public.user_now_playing ALTER COLUMN entry_id SET DEFAULT nextval('public.user_now_playing_entry_id_seq'::regclass);
+
+
+--
+-- Name: user_reminders reminder_id; Type: DEFAULT; Schema: public; Owner: -
+--
+
+ALTER TABLE ONLY public.user_reminders ALTER COLUMN reminder_id SET DEFAULT nextval('public.user_reminders_reminder_id_seq'::regclass);
+
+
+--
+-- Name: user_session_tokens id; Type: DEFAULT; Schema: public; Owner: -
+--
+
+ALTER TABLE ONLY public.user_session_tokens ALTER COLUMN id SET DEFAULT nextval('public.user_session_tokens_id_seq'::regclass);
 
 
 --
@@ -1788,6 +2158,14 @@ ALTER TABLE ONLY public.gamedb_game_companies
 
 
 --
+-- Name: gamedb_game_engines gamedb_game_engines_pkey; Type: CONSTRAINT; Schema: public; Owner: -
+--
+
+ALTER TABLE ONLY public.gamedb_game_engines
+    ADD CONSTRAINT gamedb_game_engines_pkey PRIMARY KEY (game_id, engine_id);
+
+
+--
 -- Name: gamedb_game_franchises gamedb_game_franchises_pkey; Type: CONSTRAINT; Schema: public; Owner: -
 --
 
@@ -1801,6 +2179,14 @@ ALTER TABLE ONLY public.gamedb_game_franchises
 
 ALTER TABLE ONLY public.gamedb_game_genres
     ADD CONSTRAINT gamedb_game_genres_pkey PRIMARY KEY (game_id, genre_id);
+
+
+--
+-- Name: gamedb_game_images gamedb_game_images_pkey; Type: CONSTRAINT; Schema: public; Owner: -
+--
+
+ALTER TABLE ONLY public.gamedb_game_images
+    ADD CONSTRAINT gamedb_game_images_pkey PRIMARY KEY (image_id);
 
 
 --
@@ -2316,11 +2702,51 @@ ALTER TABLE ONLY public.rpg_club_users
 
 
 --
+-- Name: rpg_club_xbox_collection_import_items rpg_club_xbox_collection_import_items_pkey; Type: CONSTRAINT; Schema: public; Owner: -
+--
+
+ALTER TABLE ONLY public.rpg_club_xbox_collection_import_items
+    ADD CONSTRAINT rpg_club_xbox_collection_import_items_pkey PRIMARY KEY (item_id);
+
+
+--
+-- Name: rpg_club_xbox_collection_imports rpg_club_xbox_collection_imports_pkey; Type: CONSTRAINT; Schema: public; Owner: -
+--
+
+ALTER TABLE ONLY public.rpg_club_xbox_collection_imports
+    ADD CONSTRAINT rpg_club_xbox_collection_imports_pkey PRIMARY KEY (import_id);
+
+
+--
+-- Name: rpg_club_xbox_title_gamedb_map rpg_club_xbox_title_gamedb_map_pkey; Type: CONSTRAINT; Schema: public; Owner: -
+--
+
+ALTER TABLE ONLY public.rpg_club_xbox_title_gamedb_map
+    ADD CONSTRAINT rpg_club_xbox_title_gamedb_map_pkey PRIMARY KEY (map_id);
+
+
+--
 -- Name: schema_migrations schema_migrations_pkey; Type: CONSTRAINT; Schema: public; Owner: -
 --
 
 ALTER TABLE ONLY public.schema_migrations
     ADD CONSTRAINT schema_migrations_pkey PRIMARY KEY (version);
+
+
+--
+-- Name: thread_game_links thread_game_links_pkey; Type: CONSTRAINT; Schema: public; Owner: -
+--
+
+ALTER TABLE ONLY public.thread_game_links
+    ADD CONSTRAINT thread_game_links_pkey PRIMARY KEY (thread_id, gamedb_game_id);
+
+
+--
+-- Name: threads threads_pkey; Type: CONSTRAINT; Schema: public; Owner: -
+--
+
+ALTER TABLE ONLY public.threads
+    ADD CONSTRAINT threads_pkey PRIMARY KEY (thread_id);
 
 
 --
@@ -2337,6 +2763,44 @@ ALTER TABLE ONLY public.user_game_collections
 
 ALTER TABLE ONLY public.user_game_completions
     ADD CONSTRAINT user_game_completions_pkey PRIMARY KEY (completion_id);
+
+
+--
+-- Name: user_now_playing user_now_playing_pkey; Type: CONSTRAINT; Schema: public; Owner: -
+--
+
+ALTER TABLE ONLY public.user_now_playing
+    ADD CONSTRAINT user_now_playing_pkey PRIMARY KEY (entry_id);
+
+
+--
+-- Name: user_reminders user_reminders_pkey; Type: CONSTRAINT; Schema: public; Owner: -
+--
+
+ALTER TABLE ONLY public.user_reminders
+    ADD CONSTRAINT user_reminders_pkey PRIMARY KEY (reminder_id);
+
+
+--
+-- Name: user_session_tokens user_session_tokens_pkey; Type: CONSTRAINT; Schema: public; Owner: -
+--
+
+ALTER TABLE ONLY public.user_session_tokens
+    ADD CONSTRAINT user_session_tokens_pkey PRIMARY KEY (id);
+
+
+--
+-- Name: idx_gamedb_game_images_lookup; Type: INDEX; Schema: public; Owner: -
+--
+
+CREATE INDEX idx_gamedb_game_images_lookup ON public.gamedb_game_images USING btree (game_id, kind, "position");
+
+
+--
+-- Name: idx_gamedb_game_images_one_primary; Type: INDEX; Schema: public; Owner: -
+--
+
+CREATE UNIQUE INDEX idx_gamedb_game_images_one_primary ON public.gamedb_game_images USING btree (game_id, kind) WHERE (is_primary = true);
 
 
 --
@@ -2414,6 +2878,41 @@ CREATE INDEX idx_rpg_club_users_hist_user ON public.rpg_club_users_hist USING bt
 --
 
 CREATE INDEX idx_user_game_completions_platform ON public.user_game_completions USING btree (platform_id);
+
+
+--
+-- Name: index_gamedb_game_engines_on_engine_id; Type: INDEX; Schema: public; Owner: -
+--
+
+CREATE INDEX index_gamedb_game_engines_on_engine_id ON public.gamedb_game_engines USING btree (engine_id);
+
+
+--
+-- Name: index_gamedb_game_engines_on_game_id; Type: INDEX; Schema: public; Owner: -
+--
+
+CREATE INDEX index_gamedb_game_engines_on_game_id ON public.gamedb_game_engines USING btree (game_id);
+
+
+--
+-- Name: index_gamedb_game_images_on_object_key; Type: INDEX; Schema: public; Owner: -
+--
+
+CREATE UNIQUE INDEX index_gamedb_game_images_on_object_key ON public.gamedb_game_images USING btree (object_key);
+
+
+--
+-- Name: index_user_session_tokens_on_token; Type: INDEX; Schema: public; Owner: -
+--
+
+CREATE UNIQUE INDEX index_user_session_tokens_on_token ON public.user_session_tokens USING btree (token);
+
+
+--
+-- Name: index_user_session_tokens_on_user_id; Type: INDEX; Schema: public; Owner: -
+--
+
+CREATE INDEX index_user_session_tokens_on_user_id ON public.user_session_tokens USING btree (user_id);
 
 
 --
@@ -2641,6 +3140,27 @@ CREATE INDEX ix_steam_coll_items_import ON public.rpg_club_steam_collection_impo
 
 
 --
+-- Name: ix_thread_game_links_game; Type: INDEX; Schema: public; Owner: -
+--
+
+CREATE INDEX ix_thread_game_links_game ON public.thread_game_links USING btree (gamedb_game_id);
+
+
+--
+-- Name: ix_threads_forum; Type: INDEX; Schema: public; Owner: -
+--
+
+CREATE INDEX ix_threads_forum ON public.threads USING btree (forum_channel_id);
+
+
+--
+-- Name: ix_threads_gamedb; Type: INDEX; Schema: public; Owner: -
+--
+
+CREATE INDEX ix_threads_gamedb ON public.threads USING btree (gamedb_game_id);
+
+
+--
 -- Name: ix_ugc_game; Type: INDEX; Schema: public; Owner: -
 --
 
@@ -2683,6 +3203,55 @@ CREATE INDEX ix_ugcol_user ON public.user_game_collections USING btree (user_id)
 
 
 --
+-- Name: ix_user_now_playing_platform; Type: INDEX; Schema: public; Owner: -
+--
+
+CREATE INDEX ix_user_now_playing_platform ON public.user_now_playing USING btree (platform_id);
+
+
+--
+-- Name: ix_user_now_playing_sort; Type: INDEX; Schema: public; Owner: -
+--
+
+CREATE INDEX ix_user_now_playing_sort ON public.user_now_playing USING btree (user_id, sort_order);
+
+
+--
+-- Name: ix_user_now_playing_user; Type: INDEX; Schema: public; Owner: -
+--
+
+CREATE INDEX ix_user_now_playing_user ON public.user_now_playing USING btree (user_id);
+
+
+--
+-- Name: ix_xbox_coll_imports_user; Type: INDEX; Schema: public; Owner: -
+--
+
+CREATE INDEX ix_xbox_coll_imports_user ON public.rpg_club_xbox_collection_imports USING btree (user_id, status);
+
+
+--
+-- Name: ix_xbox_coll_items_import; Type: INDEX; Schema: public; Owner: -
+--
+
+CREATE INDEX ix_xbox_coll_items_import ON public.rpg_club_xbox_collection_import_items USING btree (import_id, status, row_index);
+
+
+--
+-- Name: ix_xbox_coll_items_title; Type: INDEX; Schema: public; Owner: -
+--
+
+CREATE INDEX ix_xbox_coll_items_title ON public.rpg_club_xbox_collection_import_items USING btree (xbox_title_id);
+
+
+--
+-- Name: ix_xbox_title_gamedb_map_status; Type: INDEX; Schema: public; Owner: -
+--
+
+CREATE INDEX ix_xbox_title_gamedb_map_status ON public.rpg_club_xbox_title_gamedb_map USING btree (status);
+
+
+--
 -- Name: uk_gotm_round_idx; Type: INDEX; Schema: public; Owner: -
 --
 
@@ -2701,6 +3270,13 @@ CREATE UNIQUE INDEX uq_hltb_game_id ON public.rpg_club_hltb_cache USING btree (g
 --
 
 CREATE UNIQUE INDEX uq_user_game_collections_dedup ON public.user_game_collections USING btree (user_id, gamedb_game_id, COALESCE(platform_id, ('-1'::integer)::bigint), ownership_type);
+
+
+--
+-- Name: uq_user_now_playing_gamedb; Type: INDEX; Schema: public; Owner: -
+--
+
+CREATE UNIQUE INDEX uq_user_now_playing_gamedb ON public.user_now_playing USING btree (user_id, gamedb_game_id);
 
 
 --
@@ -2736,6 +3312,27 @@ CREATE UNIQUE INDEX ux_nr_gotm_noms_round_user ON public.nr_gotm_nominations USI
 --
 
 CREATE UNIQUE INDEX ux_rpg_club_admin_wiz_active ON public.rpg_club_admin_wizard_sessions USING btree (command_key, owner_user_id, channel_id, status);
+
+
+--
+-- Name: ux_user_reminders_due; Type: INDEX; Schema: public; Owner: -
+--
+
+CREATE INDEX ux_user_reminders_due ON public.user_reminders USING btree (sent_at, remind_at);
+
+
+--
+-- Name: ux_user_reminders_user; Type: INDEX; Schema: public; Owner: -
+--
+
+CREATE INDEX ux_user_reminders_user ON public.user_reminders USING btree (user_id, remind_at);
+
+
+--
+-- Name: ux_xbox_title_gamedb_map_title; Type: INDEX; Schema: public; Owner: -
+--
+
+CREATE UNIQUE INDEX ux_xbox_title_gamedb_map_title ON public.rpg_club_xbox_title_gamedb_map USING btree (xbox_title_id);
 
 
 --
@@ -2843,6 +3440,22 @@ ALTER TABLE ONLY public.gamedb_game_companies
 
 
 --
+-- Name: gamedb_game_engines fk_ge_engine; Type: FK CONSTRAINT; Schema: public; Owner: -
+--
+
+ALTER TABLE ONLY public.gamedb_game_engines
+    ADD CONSTRAINT fk_ge_engine FOREIGN KEY (engine_id) REFERENCES public.gamedb_engines(engine_id);
+
+
+--
+-- Name: gamedb_game_engines fk_ge_game; Type: FK CONSTRAINT; Schema: public; Owner: -
+--
+
+ALTER TABLE ONLY public.gamedb_game_engines
+    ADD CONSTRAINT fk_ge_game FOREIGN KEY (game_id) REFERENCES public.gamedb_games(game_id) ON DELETE CASCADE;
+
+
+--
 -- Name: gamedb_game_franchises fk_gf_franchise; Type: FK CONSTRAINT; Schema: public; Owner: -
 --
 
@@ -2915,6 +3528,22 @@ ALTER TABLE ONLY public.gamedb_game_themes
 
 
 --
+-- Name: gamedb_game_images fk_rails_gamedb_game_images_game; Type: FK CONSTRAINT; Schema: public; Owner: -
+--
+
+ALTER TABLE ONLY public.gamedb_game_images
+    ADD CONSTRAINT fk_rails_gamedb_game_images_game FOREIGN KEY (game_id) REFERENCES public.gamedb_games(game_id);
+
+
+--
+-- Name: gamedb_game_images fk_rails_gamedb_game_images_uploaded_by; Type: FK CONSTRAINT; Schema: public; Owner: -
+--
+
+ALTER TABLE ONLY public.gamedb_game_images
+    ADD CONSTRAINT fk_rails_gamedb_game_images_uploaded_by FOREIGN KEY (uploaded_by_user_id) REFERENCES public.rpg_club_users(user_id);
+
+
+--
 -- Name: rpg_club_rss_feed_items fk_rss_feed_items_feed; Type: FK CONSTRAINT; Schema: public; Owner: -
 --
 
@@ -2928,6 +3557,14 @@ ALTER TABLE ONLY public.rpg_club_rss_feed_items
 
 ALTER TABLE ONLY public.rpg_club_steam_collection_import_items
     ADD CONSTRAINT fk_steam_coll_import_items FOREIGN KEY (import_id) REFERENCES public.rpg_club_steam_collection_imports(import_id);
+
+
+--
+-- Name: threads fk_threads_gamedb_game; Type: FK CONSTRAINT; Schema: public; Owner: -
+--
+
+ALTER TABLE ONLY public.threads
+    ADD CONSTRAINT fk_threads_gamedb_game FOREIGN KEY (gamedb_game_id) REFERENCES public.gamedb_games(game_id);
 
 
 --
@@ -2963,12 +3600,46 @@ ALTER TABLE ONLY public.user_game_completions
 
 
 --
+-- Name: user_now_playing fk_user_now_playing_gamedb; Type: FK CONSTRAINT; Schema: public; Owner: -
+--
+
+ALTER TABLE ONLY public.user_now_playing
+    ADD CONSTRAINT fk_user_now_playing_gamedb FOREIGN KEY (gamedb_game_id) REFERENCES public.gamedb_games(game_id);
+
+
+--
+-- Name: user_now_playing fk_user_now_playing_platform; Type: FK CONSTRAINT; Schema: public; Owner: -
+--
+
+ALTER TABLE ONLY public.user_now_playing
+    ADD CONSTRAINT fk_user_now_playing_platform FOREIGN KEY (platform_id) REFERENCES public.gamedb_platforms(platform_id);
+
+
+--
+-- Name: rpg_club_xbox_collection_import_items fk_xbox_coll_import_items; Type: FK CONSTRAINT; Schema: public; Owner: -
+--
+
+ALTER TABLE ONLY public.rpg_club_xbox_collection_import_items
+    ADD CONSTRAINT fk_xbox_coll_import_items FOREIGN KEY (import_id) REFERENCES public.rpg_club_xbox_collection_imports(import_id);
+
+
+--
 -- PostgreSQL database dump complete
 --
 
-SET search_path TO "$user", public;
+SET search_path TO public;
 
 INSERT INTO "schema_migrations" (version) VALUES
+('20260507000800'),
+('20260507000700'),
+('20260507000600'),
+('20260507000500'),
+('20260507000400'),
+('20260507000300'),
+('20260507000200'),
+('20260507000100'),
+('20260505003300'),
+('20260505003200'),
 ('20260505003100'),
 ('20260505003000'),
 ('20260505002900'),

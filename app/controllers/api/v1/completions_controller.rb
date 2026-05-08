@@ -7,6 +7,20 @@ module Api
         render_collection(UserGameCompletion.where(user_id: params[:user_id]), default_order: { completed_at: :desc })
       end
 
+      def game_index
+        entries = UserGameCompletion
+          .where(gamedb_game_id: params[:id])
+          .includes(:user)
+          .order(completed_at: :desc)
+          .limit(pagination_limit)
+          .offset(pagination_offset)
+
+        render json: {
+          data: entries.map { |e| e.as_json.merge("user" => e.user&.as_json(except: RpgClubUser::BINARY_COLUMNS)) },
+          meta: { limit: pagination_limit, offset: pagination_offset }
+        }
+      end
+
       def show
         render json: { data: UserGameCompletion.find(params[:id]).as_json }
       end

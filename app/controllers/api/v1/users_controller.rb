@@ -3,6 +3,8 @@
 module Api
   module V1
     class UsersController < ApplicationController
+      skip_before_action :require_authentication!, only: %i[avatar profile_image]
+
       def index
         scope = RpgClubUser.without_images
         scope = scope.where("username ILIKE :term OR global_name ILIKE :term OR user_id = :exact", term: "%#{query}%", exact: params[:q]) if params[:q].present?

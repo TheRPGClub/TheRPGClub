@@ -14,10 +14,14 @@ Rails.application.routes.draw do
       get "session", to: "sessions#show"
 
       resources :games, only: %i[index show] do
+        resources :images, only: %i[index create update destroy], controller: "game_images"
+
         member do
-          get "image", to: "games#image"
+          post "refresh-images", to: "games#refresh_images"
           get "relations", to: "games#relations"
           get "releases", to: "games#releases"
+          get "now_playing", to: "now_playing#index"
+          get "completions", to: "completions#game_index"
         end
       end
 

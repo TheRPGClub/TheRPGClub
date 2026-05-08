@@ -12,10 +12,11 @@ class ApplicationController < ActionController::API
   private
 
   def current_principal
-    @current_principal ||= warden.user || warden.authenticate(:api_token, store: false)
+    @current_principal ||= warden.user || warden.authenticate(:api_token, :user_session_token, store: false)
   end
 
   def require_authentication!
+    Rails.logger.debug "AUTH_HEADER: #{request.get_header('HTTP_AUTHORIZATION').inspect}"
     return if current_principal.present?
 
     render json: { error: "unauthorized" }, status: :unauthorized
@@ -51,6 +52,14 @@ class ApplicationController < ActionController::API
 
   def request_data
     params.require(:data).permit!.to_h
+  end
+
+  def require_admin_or_service!
+    return true if current_principal&.service?
+    return true if current_principal&.discord_user? && RpgClubUser.where(user_id: current_principal.id, role_admin: true).exists?
+
+    render json: { error: "forbidden" }, status: :forbidden
+    false
   end
 
   def pagination_limit(default: 50, max: 500)

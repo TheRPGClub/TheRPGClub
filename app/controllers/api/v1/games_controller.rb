@@ -5,14 +5,15 @@ module Api
     class GamesController < ApplicationController
       def index
         scope = params[:q].present? ? GamedbGame.search(params[:q]) : GamedbGame.without_images.order(:title)
-        records = scope.limit(limit).offset(offset)
+        records = scope.preload(:images).limit(limit).offset(offset)
 
         render json: {
           data: records.as_json,
           meta: {
             resource: "gamedb_games",
             limit: limit,
-            offset: offset
+            offset: offset,
+            total: scope.except(:select, :order).count(:all)
           }
         }
       end
@@ -21,12 +22,25 @@ module Api
         render json: { data: GamedbGame.without_images.find(params[:id]).as_json }
       end
 
-      def image
-        column = params[:kind] == "art" ? "art_data" : "image_data"
-        data = GamedbGame.select(column).find(params[:id]).public_send(column)
-        return render(json: { error: "image_not_found" }, status: :not_found) if data.blank?
+      def refresh_images
+        return unless require_admin_or_service!
 
-        send_data data, type: "image/jpeg", disposition: "inline"
+        result = Gamedb::IgdbImageImporter.new.import!(params[:id])
+        render json: { data: result.as_json }
+      rescue Gamedb::IgdbImageImporter::MissingIgdbIdError => error
+        render json: { error: "missing_igdb_id", message: error.message }, status: :unprocessable_entity
+      rescue Gamedb::IgdbImageImporter::MissingIgdbGameError => error
+        render json: { error: "igdb_game_not_found", message: error.message }, status: :not_found
+      rescue Igdb::Client::ConfigurationError => error
+        render json: { error: "igdb_not_configured", message: error.message }, status: :unprocessable_entity
+      rescue Igdb::Client::RequestError => error
+        render json: { error: "igdb_request_failed", message: error.message }, status: :bad_gateway
+      rescue Gamedb::GameImageStorage::InvalidImageError => error
+        render json: { error: "image_import_failed", message: error.message }, status: :unprocessable_entity
+      rescue Backblaze::Client::ConfigurationError => error
+        render json: { error: "backblaze_not_configured", message: error.message }, status: :unprocessable_entity
+      rescue Backblaze::Client::RequestError => error
+        render json: { error: "backblaze_request_failed", message: error.message }, status: :bad_gateway
       end
 
       def releases

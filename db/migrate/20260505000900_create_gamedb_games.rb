@@ -7,8 +7,6 @@ class CreateGamedbGames < ActiveRecord::Migration[8.1]
     create_table :gamedb_games, primary_key: :game_id do |table|
       table.string :title, null: false
       table.text :description
-      table.binary :image_data
-      table.binary :art_data
       table.boolean :thumbnail_bad, default: false, null: false
       table.boolean :thumbnail_approved, default: false, null: false
       table.bigint :igdb_id

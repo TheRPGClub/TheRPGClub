@@ -5,17 +5,19 @@ require "faraday"
 module Auth
   class DiscordOauthClient
     class ConfigurationError < StandardError; end
+    class GuildMembershipError < StandardError; end
 
     AUTHORIZE_URL = "https://discord.com/oauth2/authorize"
     TOKEN_URL = "https://discord.com/api/oauth2/token"
     USER_URL = "https://discord.com/api/users/@me"
+    USER_GUILDS_URL = "https://discord.com/api/users/@me/guilds"
 
     def authorization_url(state:, redirect_uri:)
       query = {
         client_id: client_id,
         redirect_uri: redirect_uri,
         response_type: "code",
-        scope: ENV.fetch("DISCORD_OAUTH_SCOPES", "identify email"),
+        scope: oauth_scopes.join(" "),
         state: state,
         prompt: "none"
       }.to_query
@@ -38,6 +40,23 @@ module Auth
       parse_response!(response)
     end
 
+    def ensure_rpgclub_member!(access_token, discord_user_id: nil)
+      ensure_guilds_scope!
+
+      log_guild_membership_check("checking", discord_user_id: discord_user_id)
+      guilds = fetch_current_user_guilds!(access_token)
+      guild_count = guilds.size
+
+      if guilds.any? { |guild| guild.fetch("id", nil).to_s == rpgclub_guild_id }
+        log_guild_membership_check("confirmed", discord_user_id: discord_user_id, guild_count: guild_count)
+        return true
+      end
+
+      log_guild_membership_check("denied", discord_user_id: discord_user_id, guild_count: guild_count, level: :warn)
+
+      raise GuildMembershipError, "Discord user is not a member of TheRPGClub Discord server"
+    end
+
     def fetch_user!(access_token)
       response = Faraday.get(USER_URL) do |request|
         request.headers["Authorization"] = "Bearer #{access_token}"
@@ -47,6 +66,32 @@ module Auth
     end
 
     private
+
+    def fetch_current_user_guilds!(access_token)
+      response = Faraday.get(USER_GUILDS_URL) do |request|
+        request.headers["Authorization"] = "Bearer #{access_token}"
+      end
+
+      parse_response!(response)
+    end
+
+    def log_guild_membership_check(outcome, discord_user_id:, guild_count: nil, level: :info)
+      payload = {
+        event: "discord_oauth.guild_membership_check",
+        outcome: outcome,
+        discord_user_id: sanitized_discord_user_id(discord_user_id)
+      }
+      payload[:guild_count] = guild_count unless guild_count.nil?
+
+      Rails.logger.public_send(level, payload.to_json)
+    end
+
+    def sanitized_discord_user_id(discord_user_id)
+      value = discord_user_id.to_s.strip
+      return value if value.match?(/\A\d+\z/)
+
+      "unknown"
+    end
 
     def client_id
       value = ENV.fetch("DISCORD_CLIENT_ID", nil).to_s.strip
@@ -60,6 +105,23 @@ module Auth
       return value if value.present? && value != "change_me"
 
       raise ConfigurationError, "DISCORD_CLIENT_SECRET must be set from the Discord application OAuth2 settings"
+    end
+
+    def rpgclub_guild_id
+      value = ENV.fetch("DISCORD_RPGCLUB_GUILD_ID", nil).to_s.strip
+      return value if value.match?(/\A\d+\z/)
+
+      raise ConfigurationError, "DISCORD_RPGCLUB_GUILD_ID must be the numeric TheRPGClub Discord server ID"
+    end
+
+    def oauth_scopes
+      ENV.fetch("DISCORD_OAUTH_SCOPES", "identify email guilds").split
+    end
+
+    def ensure_guilds_scope!
+      return if oauth_scopes.include?("guilds")
+
+      raise ConfigurationError, "DISCORD_OAUTH_SCOPES must include guilds to verify TheRPGClub membership"
     end
 
     def parse_response!(response)
