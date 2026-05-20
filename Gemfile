@@ -46,6 +46,9 @@ group :development, :test do
 
   # N+1 query detection
   gem "bullet"
+
+  # RSpec test framework
+  gem "rspec-rails", "~> 8.0"
 end
 
 gem "warden", "~> 1.2"
