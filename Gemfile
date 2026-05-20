@@ -43,6 +43,9 @@ group :development, :test do
 
   # Omakase Ruby styling [https://github.com/rails/rubocop-rails-omakase/]
   gem "rubocop-rails-omakase", require: false
+
+  # N+1 query detection
+  gem "bullet"
 end
 
 gem "warden", "~> 1.2"
