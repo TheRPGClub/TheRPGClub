@@ -44,6 +44,7 @@ Rails.application.routes.draw do
           post "reviews", to: "reviews#create"
           get "backlog", to: "backlog#index"
           post "backlog", to: "backlog#create"
+          get "now_playing", to: "now_playing#user_index"
           get "socials", to: "user_socials#index"
           post "socials", to: "user_socials#create"
         end

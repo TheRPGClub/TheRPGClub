@@ -8,7 +8,8 @@ class UserNowPlaying < ApplicationRecord
     class_name: "RpgClubUser",
     foreign_key: :user_id,
     primary_key: :user_id,
-    optional: true
+    optional: true,
+    inverse_of: :now_playing_entries
   belongs_to :game,
     class_name: "GamedbGame",
     foreign_key: :gamedb_game_id,

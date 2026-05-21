@@ -3,7 +3,12 @@
 module Api
   module V1
     class UsersController < ApplicationController
+      include GameEntrySerialization
+
       skip_before_action :require_authentication!, only: %i[avatar profile_image]
+
+      PREVIEW_LIMIT_DEFAULT = 10
+      PREVIEW_LIMIT_MAX = 50
 
       def index
         scope = RpgClubUser.without_images
@@ -12,16 +17,36 @@ module Api
       end
 
       def show
-        model = RpgClubUser.includes(socials: :social_platform).find(params[:user_id])
-        user = RpgClubUser.without_images.find(params[:user_id]).as_json
-        socials = model.socials.map do |social|
+        user = RpgClubUser.without_images.includes(socials: :social_platform).find(params[:user_id])
+        limit = preview_limit
+
+        socials = user.socials.map do |social|
           social.as_json.merge("social_platform" => social.social_platform.as_json)
         end
 
+        now_playing = user.now_playing_entries.preload(:game, :platform).order(added_at: :desc).limit(limit).to_a
+        favorites   = user.game_favorites.preload(:game).order(:sort_order).limit(limit).to_a
+        reviews     = user.reviews.preload(:game).order(created_at: :desc).limit(limit).to_a
+        completions = user.game_completions.preload(:game, :platform).order(completed_at: :desc).limit(limit).to_a
+
+        counts = {
+          now_playing: user.now_playing_entries.count,
+          favorites:   user.game_favorites.count,
+          reviews:     user.reviews.count,
+          completions: user.game_completions.count,
+          backlog:     user.game_backlog_entries.count,
+          collections: user.game_collections.count
+        }
+
         render json: {
-          data: user.merge(
-            "membership" => model.membership,
-            "socials"    => socials
+          data: user.as_json.merge(
+            "membership"  => user.membership,
+            "socials"     => socials,
+            "now_playing" => now_playing.map { |e| serialize_with_game_and_platform(e) },
+            "favorites"   => favorites.map   { |e| serialize_with_game(e) },
+            "reviews"     => reviews.map     { |e| serialize_with_game(e) },
+            "completions" => completions.map { |e| serialize_with_game_and_platform(e) },
+            "counts"      => counts
           )
         }
       end
@@ -38,6 +63,12 @@ module Api
 
       def query
         ActiveRecord::Base.sanitize_sql_like(params[:q].to_s.strip)
+      end
+
+      def preview_limit
+        raw = params[:preview_limit].to_i
+        raw = PREVIEW_LIMIT_DEFAULT if raw <= 0
+        [raw, PREVIEW_LIMIT_MAX].min
       end
 
       def send_user_image(column)
