@@ -23,6 +23,7 @@ Rails.application.routes.draw do
           get "releases", to: "games#releases"
           get "now_playing", to: "now_playing#index"
           get "completions", to: "completions#game_index"
+          get "reviews", to: "reviews#game_index"
         end
       end
 
@@ -39,6 +40,8 @@ Rails.application.routes.draw do
           post "completions", to: "completions#create"
           get "favorites", to: "favorites#index"
           post "favorites", to: "favorites#create"
+          get "reviews", to: "reviews#index"
+          post "reviews", to: "reviews#create"
           get "socials", to: "user_socials#index"
           post "socials", to: "user_socials#create"
         end
@@ -47,6 +50,7 @@ Rails.application.routes.draw do
       resources :collections, only: %i[show update destroy]
       resources :completions, only: %i[show update destroy]
       resources :favorites, only: %i[show update destroy]
+      resources :reviews, only: %i[show update destroy]
       resources :social_platforms, only: %i[index create]
       resources :user_socials, only: %i[show update destroy]
       resources :gotm_entries, only: %i[index show]
