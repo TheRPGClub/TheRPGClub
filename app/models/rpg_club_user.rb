@@ -37,6 +37,12 @@ class RpgClubUser < ApplicationRecord
     primary_key: :user_id,
     dependent: nil,
     inverse_of: :user
+  has_many :now_playing_entries,
+    class_name: "UserNowPlaying",
+    foreign_key: :user_id,
+    primary_key: :user_id,
+    dependent: nil,
+    inverse_of: :user
   has_many :game_backlog_entries,
     class_name: "UserGameBacklog",
     foreign_key: :user_id,
