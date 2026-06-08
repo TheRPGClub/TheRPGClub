@@ -38,11 +38,18 @@ class ApplicationController < ActionController::API
     render json: { error: error.message }, status: :unprocessable_entity
   end
 
-  def render_collection(scope, default_order:)
+  # Render a paginated collection.
+  #
+  # When `resource` is given the records are serialized through that Alba
+  # resource; otherwise they fall back to `as_json` (used by endpoints not yet
+  # migrated to a resource). `params` is forwarded to the resource for
+  # association/conditional injection.
+  def render_collection(scope, resource: nil, default_order:, params: {})
     records = scope.order(default_order).limit(pagination_limit).offset(pagination_offset)
+    data = resource ? resource.new(records, params: params).serializable_hash : records.as_json
 
     render json: {
-      data: records.as_json,
+      data: data,
       meta: {
         limit: pagination_limit,
         offset: pagination_offset

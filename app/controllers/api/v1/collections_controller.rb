@@ -4,7 +4,7 @@ module Api
   module V1
     class CollectionsController < ApplicationController
       def index
-        render_collection(UserGameCollection.where(user_id: params[:user_id]), default_order: { created_at: :desc })
+        render_collection(UserGameCollection.where(user_id: params[:user_id]), resource: CollectionEntryResource, default_order: { created_at: :desc })
       end
 
       def show

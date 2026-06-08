@@ -4,7 +4,7 @@ module Api
   module V1
     class VotingInfoController < ApplicationController
       def index
-        render_collection(BotVotingInfo.all, default_order: { round_number: :desc })
+        render_collection(BotVotingInfo.all, resource: VotingInfoResource, default_order: { round_number: :desc })
       end
 
       def show

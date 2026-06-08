@@ -4,7 +4,7 @@ module Api
   module V1
     class SuggestionsController < ApplicationController
       def index
-        render_collection(RpgClubSuggestion.all, default_order: { created_at: :desc })
+        render_collection(RpgClubSuggestion.all, resource: SuggestionResource, default_order: { created_at: :desc })
       end
 
       def show

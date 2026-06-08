@@ -4,7 +4,7 @@ module Api
   module V1
     class RegionsController < ApplicationController
       def index
-        render_collection(GamedbRegion.all, default_order: { region_name: :asc })
+        render_collection(GamedbRegion.all, resource: RegionResource, default_order: { region_name: :asc })
       end
 
       def show

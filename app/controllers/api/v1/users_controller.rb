@@ -13,7 +13,7 @@ module Api
       def index
         scope = RpgClubUser.without_images
         scope = scope.where("username ILIKE :term OR global_name ILIKE :term OR user_id = :exact", term: "%#{query}%", exact: params[:q]) if params[:q].present?
-        render_collection(scope, default_order: { username: :asc })
+        render_collection(scope, resource: UserSummaryResource, default_order: { username: :asc })
       end
 
       def show

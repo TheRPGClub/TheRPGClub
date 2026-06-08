@@ -4,7 +4,7 @@ module Api
   module V1
     class RssFeedsController < ApplicationController
       def index
-        render_collection(RpgClubRssFeed.all, default_order: { feed_name: :asc })
+        render_collection(RpgClubRssFeed.all, resource: RssFeedResource, default_order: { feed_name: :asc })
       end
 
       def show

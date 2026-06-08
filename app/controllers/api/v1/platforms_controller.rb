@@ -7,7 +7,7 @@ module Api
         scope = GamedbPlatform.all
         scope = scope.where("platform_name ILIKE :term OR platform_code ILIKE :term", term: "%#{query}%") if params[:q].present?
 
-        render_collection(scope, default_order: { platform_name: :asc })
+        render_collection(scope, resource: PlatformResource, default_order: { platform_name: :asc })
       end
 
       def show
