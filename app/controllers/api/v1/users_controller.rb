@@ -18,14 +18,12 @@ module Api
         user = RpgClubUser.without_images.includes(socials: :social_platform).find(params[:user_id])
         limit = preview_limit
 
-        socials = user.socials.map do |social|
-          social.as_json.merge("social_platform" => social.social_platform.as_json)
-        end
-
-        now_playing = user.now_playing_entries.preload(:game, :platform).order(added_at: :desc).limit(limit).to_a
-        favorites   = user.game_favorites.preload(:game).order(:sort_order).limit(limit).to_a
-        reviews     = user.reviews.preload(:game).order(created_at: :desc).limit(limit).to_a
-        completions = user.game_completions.preload(:game, :platform).order(completed_at: :desc).limit(limit).to_a
+        previews = {
+          now_playing: user.now_playing_entries.preload(:game, :platform).order(added_at: :desc).limit(limit).to_a,
+          favorites:   user.game_favorites.preload(:game).order(:sort_order).limit(limit).to_a,
+          reviews:     user.reviews.preload(:game).order(created_at: :desc).limit(limit).to_a,
+          completions: user.game_completions.preload(:game, :platform).order(completed_at: :desc).limit(limit).to_a
+        }
 
         counts = {
           now_playing: user.now_playing_entries.count,
@@ -37,15 +35,7 @@ module Api
         }
 
         render json: {
-          data: user.as_json.merge(
-            "membership"  => user.membership,
-            "socials"     => socials,
-            "now_playing" => NowPlayingEntryResource.new(now_playing).serializable_hash,
-            "favorites"   => FavoriteEntryResource.new(favorites).serializable_hash,
-            "reviews"     => ReviewEntryResource.new(reviews).serializable_hash,
-            "completions" => CompletionEntryResource.new(completions).serializable_hash,
-            "counts"      => counts
-          )
+          data: UserResource.new(user, params: previews.merge(counts: counts)).serializable_hash
         }
       end
 

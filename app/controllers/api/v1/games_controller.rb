@@ -9,7 +9,7 @@ module Api
         records = scope.preload(:images).limit(limit).offset(offset)
 
         render json: {
-          data: records.as_json,
+          data: GameResource.new(records).serializable_hash,
           meta: {
             resource: "gamedb_games",
             limit: limit,
@@ -31,7 +31,7 @@ module Api
           .order(completed_at: :desc)
 
         render json: {
-          data: game.as_json.merge(
+          data: GameResource.new(game).serializable_hash.merge(
             "gotm_month_year" => game.gotm_won ? game.gotm_entries.order(round_number: :desc).pick(:month_year) : nil,
             "nr_gotm_month_year" => game.nr_gotm_won ? game.nr_gotm_entries.order(round_number: :desc).pick(:month_year) : nil,
             "now_playing" => NowPlayingUserEntryResource.new(now_playing).serializable_hash,
@@ -67,17 +67,19 @@ module Api
 
       def relations
         game = GamedbGame.find(params[:id])
+        companies = game.game_companies.includes(:company).sort_by { |game_company| game_company.company.name.to_s }
+
         render json: {
           data: {
-            platforms: game.platforms.order(:platform_name).as_json,
+            platforms: PlatformResource.new(game.platforms.order(:platform_name)).serializable_hash,
             releases: releases_for(game),
-            companies: companies_for(game),
-            franchises: game.franchises.order(:name).as_json,
-            genres: game.genres.order(:name).as_json,
-            modes: game.modes.order(:name).as_json,
-            perspectives: game.perspectives.order(:name).as_json,
-            themes: game.themes.order(:name).as_json,
-            alternates: game.alternate_games.as_json
+            companies: GameCompanyResource.new(companies).serializable_hash,
+            franchises: FranchiseResource.new(game.franchises.order(:name)).serializable_hash,
+            genres: GenreResource.new(game.genres.order(:name)).serializable_hash,
+            modes: ModeResource.new(game.modes.order(:name)).serializable_hash,
+            perspectives: PerspectiveResource.new(game.perspectives.order(:name)).serializable_hash,
+            themes: ThemeResource.new(game.themes.order(:name)).serializable_hash,
+            alternates: GameResource.new(game.alternate_games).serializable_hash
           }
         }
       end
@@ -94,26 +96,11 @@ module Api
       end
 
       def releases_for(game)
-        game
+        releases = game
           .releases
           .includes(:platform, :region)
           .sort_by { |release| [ release.release_date || Date.new(9999, 12, 31), release.platform.platform_name, release.region.region_name ] }
-          .map { |release| release_json(release) }
-      end
-
-      def release_json(release)
-        release.as_json.merge(
-          "platform_code" => release.platform.platform_code,
-          "platform_name" => release.platform.platform_name,
-          "region_code" => release.region.region_code,
-          "region_name" => release.region.region_name
-        )
-      end
-
-      def companies_for(game)
-        game.game_companies.includes(:company).sort_by { |game_company| game_company.company.name.to_s }.map do |game_company|
-          game_company.company.as_json.merge("role" => game_company.role)
-        end
+        ReleaseResource.new(releases).serializable_hash
       end
 
       def limit
