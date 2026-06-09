@@ -1,6 +1,12 @@
 # frozen_string_literal: true
 
 class ApplicationController < ActionController::API
+  include Pagy::Method
+
+  # Default and ceiling page sizes for paginated collections.
+  DEFAULT_PER = 50
+  MAX_PER = 500
+
   before_action :require_authentication!
 
   rescue_from ActiveRecord::RecordNotFound, with: :render_not_found
@@ -44,17 +50,11 @@ class ApplicationController < ActionController::API
   # resource; otherwise they fall back to `as_json` (used by endpoints not yet
   # migrated to a resource). `params` is forwarded to the resource for
   # association/conditional injection.
-  def render_collection(scope, resource: nil, default_order:, params: {})
-    records = scope.order(default_order).limit(pagination_limit).offset(pagination_offset)
+  def render_collection(scope, resource: nil, default_order:, params: {}, default_per: DEFAULT_PER, max_per: MAX_PER)
+    pagy, records = pagy(scope.order(default_order), **pagy_options(default_per:, max_per:))
     data = resource ? resource.new(records, params: params).serializable_hash : records.as_json
 
-    render json: {
-      data: data,
-      meta: {
-        limit: pagination_limit,
-        offset: pagination_offset
-      }
-    }
+    render json: { data: data, meta: pagy_meta(pagy) }
   end
 
   def request_data
@@ -87,14 +87,39 @@ class ApplicationController < ActionController::API
     params[:user_id]
   end
 
-  def pagination_limit(default: 50, max: 500)
-    [ [ params.fetch(:limit, default).to_i, 1 ].max, max ].min
+  # Page-native pagination options for pagy, derived from the request params.
+  #
+  # Canonical params are `?page` and `?per`. We also accept the legacy
+  # `?limit`/`?offset` pair (`limit` -> per, `offset` -> page) so the unaudited
+  # Discord-bot consumer keeps working. The alias is transitional and should be
+  # dropped once the bot is confirmed migrated to page/per.
+  def pagy_options(default_per: DEFAULT_PER, max_per: MAX_PER)
+    per = clamp_per(params[:per].presence || params[:limit], default_per:, max_per:)
+    page =
+      if params[:page].blank? && params[:offset].present?
+        (params[:offset].to_i / per) + 1
+      else
+        params[:page].to_i
+      end
+
+    { page: [ page, 1 ].max, limit: per }
   end
 
-  def pagination_offset
-    return [ params[:offset].to_i, 0 ].max if params[:offset].present?
+  # Build page-native pagination meta from a pagy instance.
+  def pagy_meta(pagy)
+    {
+      page: pagy.page,
+      pages: pagy.pages,
+      count: pagy.count,
+      per: pagy.limit,
+      prev: pagy.previous,
+      next: pagy.next
+    }
+  end
 
-    page = [ params.fetch(:page, 1).to_i, 1 ].max
-    (page - 1) * pagination_limit
+  def clamp_per(value, default_per: DEFAULT_PER, max_per: MAX_PER)
+    per = value.to_i
+    per = default_per if per <= 0
+    [ per, max_per ].min
   end
 end

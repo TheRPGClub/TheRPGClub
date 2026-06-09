@@ -7,16 +7,7 @@ module Api
 
       def index
         scope = UserGameFavorite.where(user_id: params[:user_id]).preload(:game)
-        total = scope.count
-        records = scope
-          .order(sort_order: :asc, created_at: :desc)
-          .limit(pagination_limit)
-          .offset(pagination_offset)
-
-        render json: {
-          data: FavoriteEntryResource.new(records).serializable_hash,
-          meta: { limit: pagination_limit, offset: pagination_offset, total: total }
-        }
+        render_collection(scope, resource: FavoriteEntryResource, default_order: { sort_order: :asc, created_at: :desc })
       end
 
       def show

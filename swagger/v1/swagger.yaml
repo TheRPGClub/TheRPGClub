@@ -38,17 +38,33 @@ components:
       - error
     PaginationMeta:
       type: object
+      description: Page-native pagination metadata (from pagy).
       properties:
-        limit:
+        page:
           type: integer
-          example: 50
-        offset:
+          example: 1
+        pages:
           type: integer
-          example: 0
-        total:
+          example: 5
+        count:
           type: integer
           example: 123
+        per:
+          type: integer
+          example: 50
+        prev:
+          type: integer
+          example:
           nullable: true
+        next:
+          type: integer
+          example: 2
+          nullable: true
+      required:
+      - page
+      - pages
+      - count
+      - per
     DeletedResponse:
       type: object
       properties:
@@ -73,25 +89,36 @@ paths:
       - Backlog
       description: Ordered by `sort_order` ascending then `created_at` descending.
       parameters:
-      - name: limit
+      - name: page
+        in: query
+        schema:
+          type: integer
+          default: 1
+          minimum: 1
+        required: false
+      - name: per
         in: query
         schema:
           type: integer
           default: 50
           maximum: 500
         required: false
+      - name: limit
+        in: query
+        schema:
+          type: integer
+          maximum: 500
+        required: false
+        description: Deprecated alias for `per` (transitional, for the unaudited Discord
+          bot).
       - name: offset
         in: query
         schema:
           type: integer
-          default: 0
+          minimum: 0
         required: false
-      - name: page
-        in: query
-        schema:
-          type: integer
-          default: 1
-        required: false
+        description: Deprecated; converted to a page number (transitional, for the
+          unaudited Discord bot).
       responses:
         '200':
           description: backlog list
@@ -331,25 +358,36 @@ paths:
       tags:
       - Collections
       parameters:
-      - name: limit
+      - name: page
+        in: query
+        schema:
+          type: integer
+          default: 1
+          minimum: 1
+        required: false
+      - name: per
         in: query
         schema:
           type: integer
           default: 50
           maximum: 500
         required: false
+      - name: limit
+        in: query
+        schema:
+          type: integer
+          maximum: 500
+        required: false
+        description: Deprecated alias for `per` (transitional, for the unaudited Discord
+          bot).
       - name: offset
         in: query
         schema:
           type: integer
-          default: 0
+          minimum: 0
         required: false
-      - name: page
-        in: query
-        schema:
-          type: integer
-          default: 1
-        required: false
+        description: Deprecated; converted to a page number (transitional, for the
+          unaudited Discord bot).
       responses:
         '200':
           description: collections list
@@ -575,25 +613,36 @@ paths:
       tags:
       - Completions
       parameters:
-      - name: limit
+      - name: page
+        in: query
+        schema:
+          type: integer
+          default: 1
+          minimum: 1
+        required: false
+      - name: per
         in: query
         schema:
           type: integer
           default: 50
           maximum: 500
         required: false
+      - name: limit
+        in: query
+        schema:
+          type: integer
+          maximum: 500
+        required: false
+        description: Deprecated alias for `per` (transitional, for the unaudited Discord
+          bot).
       - name: offset
         in: query
         schema:
           type: integer
-          default: 0
+          minimum: 0
         required: false
-      - name: page
-        in: query
-        schema:
-          type: integer
-          default: 1
-        required: false
+        description: Deprecated; converted to a page number (transitional, for the
+          unaudited Discord bot).
       responses:
         '200':
           description: completions list
@@ -884,25 +933,36 @@ paths:
       - Favorites
       description: Ordered by `sort_order` ascending, then `created_at` descending.
       parameters:
-      - name: limit
+      - name: page
+        in: query
+        schema:
+          type: integer
+          default: 1
+          minimum: 1
+        required: false
+      - name: per
         in: query
         schema:
           type: integer
           default: 50
           maximum: 500
         required: false
+      - name: limit
+        in: query
+        schema:
+          type: integer
+          maximum: 500
+        required: false
+        description: Deprecated alias for `per` (transitional, for the unaudited Discord
+          bot).
       - name: offset
         in: query
         schema:
           type: integer
-          default: 0
+          minimum: 0
         required: false
-      - name: page
-        in: query
-        schema:
-          type: integer
-          default: 1
-        required: false
+        description: Deprecated; converted to a page number (transitional, for the
+          unaudited Discord bot).
       responses:
         '200':
           description: favorites list
@@ -1405,21 +1465,36 @@ paths:
           - any
         required: false
         description: Filter to past GOTM winners, Non-Retro GOTM winners, or either.
-      - name: limit
+      - name: page
+        in: query
+        schema:
+          type: integer
+          default: 1
+          minimum: 1
+        required: false
+      - name: per
         in: query
         schema:
           type: integer
           default: 25
-          minimum: 1
           maximum: 100
         required: false
+      - name: limit
+        in: query
+        schema:
+          type: integer
+          maximum: 100
+        required: false
+        description: Deprecated alias for `per` (transitional, for the unaudited Discord
+          bot).
       - name: offset
         in: query
         schema:
           type: integer
-          default: 0
           minimum: 0
         required: false
+        description: Deprecated; converted to a page number (transitional, for the
+          unaudited Discord bot).
       responses:
         '200':
           description: games list
@@ -1434,17 +1509,13 @@ paths:
                       type: object
                       additionalProperties: true
                   meta:
-                    type: object
-                    properties:
-                      resource:
-                        type: string
-                        example: gamedb_games
-                      limit:
-                        type: integer
-                      offset:
-                        type: integer
-                      total:
-                        type: integer
+                    allOf:
+                    - "$ref": "#/components/schemas/PaginationMeta"
+                    - type: object
+                      properties:
+                        resource:
+                          type: string
+                          example: gamedb_games
         '401':
           description: unauthenticated
           content:
@@ -1689,18 +1760,36 @@ paths:
       tags:
       - Games
       parameters:
-      - name: limit
+      - name: page
+        in: query
+        schema:
+          type: integer
+          default: 1
+          minimum: 1
+        required: false
+      - name: per
         in: query
         schema:
           type: integer
           default: 50
+          maximum: 500
         required: false
+      - name: limit
+        in: query
+        schema:
+          type: integer
+          maximum: 500
+        required: false
+        description: Deprecated alias for `per` (transitional, for the unaudited Discord
+          bot).
       - name: offset
         in: query
         schema:
           type: integer
-          default: 0
+          minimum: 0
         required: false
+        description: Deprecated; converted to a page number (transitional, for the
+          unaudited Discord bot).
       responses:
         '200':
           description: now-playing entries
@@ -1734,18 +1823,36 @@ paths:
       tags:
       - Games
       parameters:
-      - name: limit
+      - name: page
+        in: query
+        schema:
+          type: integer
+          default: 1
+          minimum: 1
+        required: false
+      - name: per
         in: query
         schema:
           type: integer
           default: 50
+          maximum: 500
         required: false
+      - name: limit
+        in: query
+        schema:
+          type: integer
+          maximum: 500
+        required: false
+        description: Deprecated alias for `per` (transitional, for the unaudited Discord
+          bot).
       - name: offset
         in: query
         schema:
           type: integer
-          default: 0
+          minimum: 0
         required: false
+        description: Deprecated; converted to a page number (transitional, for the
+          unaudited Discord bot).
       responses:
         '200':
           description: completions for game
@@ -1780,18 +1887,36 @@ paths:
       - Games
       description: Reviews are sorted so those with non-null bodies appear first.
       parameters:
-      - name: limit
+      - name: page
+        in: query
+        schema:
+          type: integer
+          default: 1
+          minimum: 1
+        required: false
+      - name: per
         in: query
         schema:
           type: integer
           default: 50
+          maximum: 500
         required: false
+      - name: limit
+        in: query
+        schema:
+          type: integer
+          maximum: 500
+        required: false
+        description: Deprecated alias for `per` (transitional, for the unaudited Discord
+          bot).
       - name: offset
         in: query
         schema:
           type: integer
-          default: 0
+          minimum: 0
         required: false
+        description: Deprecated; converted to a page number (transitional, for the
+          unaudited Discord bot).
       responses:
         '200':
           description: reviews for game
@@ -1834,25 +1959,36 @@ paths:
           example: game
         required: false
         description: Comma-separated includes. Currently `game` is supported.
-      - name: limit
+      - name: page
+        in: query
+        schema:
+          type: integer
+          default: 1
+          minimum: 1
+        required: false
+      - name: per
         in: query
         schema:
           type: integer
           default: 50
           maximum: 500
         required: false
+      - name: limit
+        in: query
+        schema:
+          type: integer
+          maximum: 500
+        required: false
+        description: Deprecated alias for `per` (transitional, for the unaudited Discord
+          bot).
       - name: offset
         in: query
         schema:
           type: integer
-          default: 0
+          minimum: 0
         required: false
-      - name: page
-        in: query
-        schema:
-          type: integer
-          default: 1
-        required: false
+        description: Deprecated; converted to a page number (transitional, for the
+          unaudited Discord bot).
       responses:
         '200':
           description: GOTM entries
@@ -1951,25 +2087,36 @@ paths:
       description: Returns the games a specific user is currently playing, newest
         first.
       parameters:
-      - name: limit
+      - name: page
+        in: query
+        schema:
+          type: integer
+          default: 1
+          minimum: 1
+        required: false
+      - name: per
         in: query
         schema:
           type: integer
           default: 50
           maximum: 500
         required: false
+      - name: limit
+        in: query
+        schema:
+          type: integer
+          maximum: 500
+        required: false
+        description: Deprecated alias for `per` (transitional, for the unaudited Discord
+          bot).
       - name: offset
         in: query
         schema:
           type: integer
-          default: 0
+          minimum: 0
         required: false
-      - name: page
-        in: query
-        schema:
-          type: integer
-          default: 1
-        required: false
+        description: Deprecated; converted to a page number (transitional, for the
+          unaudited Discord bot).
       responses:
         '200':
           description: now-playing list
@@ -2010,25 +2157,36 @@ paths:
           type: string
           example: game
         required: false
-      - name: limit
+      - name: page
+        in: query
+        schema:
+          type: integer
+          default: 1
+          minimum: 1
+        required: false
+      - name: per
         in: query
         schema:
           type: integer
           default: 50
           maximum: 500
         required: false
+      - name: limit
+        in: query
+        schema:
+          type: integer
+          maximum: 500
+        required: false
+        description: Deprecated alias for `per` (transitional, for the unaudited Discord
+          bot).
       - name: offset
         in: query
         schema:
           type: integer
-          default: 0
+          minimum: 0
         required: false
-      - name: page
-        in: query
-        schema:
-          type: integer
-          default: 1
-        required: false
+        description: Deprecated; converted to a page number (transitional, for the
+          unaudited Discord bot).
       responses:
         '200':
           description: Non-Retro GOTM entries
@@ -2106,25 +2264,36 @@ paths:
           type: string
         required: false
         description: Search term against `platform_name` or `platform_code`.
-      - name: limit
+      - name: page
+        in: query
+        schema:
+          type: integer
+          default: 1
+          minimum: 1
+        required: false
+      - name: per
         in: query
         schema:
           type: integer
           default: 50
           maximum: 500
         required: false
+      - name: limit
+        in: query
+        schema:
+          type: integer
+          maximum: 500
+        required: false
+        description: Deprecated alias for `per` (transitional, for the unaudited Discord
+          bot).
       - name: offset
         in: query
         schema:
           type: integer
-          default: 0
+          minimum: 0
         required: false
-      - name: page
-        in: query
-        schema:
-          type: integer
-          default: 1
-        required: false
+        description: Deprecated; converted to a page number (transitional, for the
+          unaudited Discord bot).
       responses:
         '200':
           description: platforms list
@@ -2194,25 +2363,36 @@ paths:
         schema:
           type: boolean
         required: false
-      - name: limit
+      - name: page
+        in: query
+        schema:
+          type: integer
+          default: 1
+          minimum: 1
+        required: false
+      - name: per
         in: query
         schema:
           type: integer
           default: 50
           maximum: 500
         required: false
+      - name: limit
+        in: query
+        schema:
+          type: integer
+          maximum: 500
+        required: false
+        description: Deprecated alias for `per` (transitional, for the unaudited Discord
+          bot).
       - name: offset
         in: query
         schema:
           type: integer
-          default: 0
+          minimum: 0
         required: false
-      - name: page
-        in: query
-        schema:
-          type: integer
-          default: 1
-        required: false
+        description: Deprecated; converted to a page number (transitional, for the
+          unaudited Discord bot).
       responses:
         '200':
           description: public reminders
@@ -2419,25 +2599,36 @@ paths:
       - Regions
       description: Returns release regions (NA, JP, EU, ...).
       parameters:
-      - name: limit
+      - name: page
+        in: query
+        schema:
+          type: integer
+          default: 1
+          minimum: 1
+        required: false
+      - name: per
         in: query
         schema:
           type: integer
           default: 50
           maximum: 500
         required: false
+      - name: limit
+        in: query
+        schema:
+          type: integer
+          maximum: 500
+        required: false
+        description: Deprecated alias for `per` (transitional, for the unaudited Discord
+          bot).
       - name: offset
         in: query
         schema:
           type: integer
-          default: 0
+          minimum: 0
         required: false
-      - name: page
-        in: query
-        schema:
-          type: integer
-          default: 1
-        required: false
+        description: Deprecated; converted to a page number (transitional, for the
+          unaudited Discord bot).
       responses:
         '200':
           description: regions list
@@ -2506,25 +2697,36 @@ paths:
       tags:
       - Reviews
       parameters:
-      - name: limit
+      - name: page
+        in: query
+        schema:
+          type: integer
+          default: 1
+          minimum: 1
+        required: false
+      - name: per
         in: query
         schema:
           type: integer
           default: 50
           maximum: 500
         required: false
+      - name: limit
+        in: query
+        schema:
+          type: integer
+          maximum: 500
+        required: false
+        description: Deprecated alias for `per` (transitional, for the unaudited Discord
+          bot).
       - name: offset
         in: query
         schema:
           type: integer
-          default: 0
+          minimum: 0
         required: false
-      - name: page
-        in: query
-        schema:
-          type: integer
-          default: 1
-        required: false
+        description: Deprecated; converted to a page number (transitional, for the
+          unaudited Discord bot).
       responses:
         '200':
           description: reviews list
@@ -2757,25 +2959,36 @@ paths:
       tags:
       - RSS Feeds
       parameters:
-      - name: limit
+      - name: page
+        in: query
+        schema:
+          type: integer
+          default: 1
+          minimum: 1
+        required: false
+      - name: per
         in: query
         schema:
           type: integer
           default: 50
           maximum: 500
         required: false
+      - name: limit
+        in: query
+        schema:
+          type: integer
+          maximum: 500
+        required: false
+        description: Deprecated alias for `per` (transitional, for the unaudited Discord
+          bot).
       - name: offset
         in: query
         schema:
           type: integer
-          default: 0
+          minimum: 0
         required: false
-      - name: page
-        in: query
-        schema:
-          type: integer
-          default: 1
-        required: false
+        description: Deprecated; converted to a page number (transitional, for the
+          unaudited Discord bot).
       responses:
         '200':
           description: rss feeds
@@ -3017,25 +3230,36 @@ paths:
       description: Returns the catalog of social-network platforms users can link
         on their profile.
       parameters:
-      - name: limit
+      - name: page
+        in: query
+        schema:
+          type: integer
+          default: 1
+          minimum: 1
+        required: false
+      - name: per
         in: query
         schema:
           type: integer
           default: 50
           maximum: 500
         required: false
+      - name: limit
+        in: query
+        schema:
+          type: integer
+          maximum: 500
+        required: false
+        description: Deprecated alias for `per` (transitional, for the unaudited Discord
+          bot).
       - name: offset
         in: query
         schema:
           type: integer
-          default: 0
+          minimum: 0
         required: false
-      - name: page
-        in: query
-        schema:
-          type: integer
-          default: 1
-        required: false
+        description: Deprecated; converted to a page number (transitional, for the
+          unaudited Discord bot).
       responses:
         '200':
           description: social platforms
@@ -3117,25 +3341,36 @@ paths:
       tags:
       - Starboard
       parameters:
-      - name: limit
+      - name: page
+        in: query
+        schema:
+          type: integer
+          default: 1
+          minimum: 1
+        required: false
+      - name: per
         in: query
         schema:
           type: integer
           default: 50
           maximum: 500
         required: false
+      - name: limit
+        in: query
+        schema:
+          type: integer
+          maximum: 500
+        required: false
+        description: Deprecated alias for `per` (transitional, for the unaudited Discord
+          bot).
       - name: offset
         in: query
         schema:
           type: integer
-          default: 0
+          minimum: 0
         required: false
-      - name: page
-        in: query
-        schema:
-          type: integer
-          default: 1
-        required: false
+        description: Deprecated; converted to a page number (transitional, for the
+          unaudited Discord bot).
       responses:
         '200':
           description: starboard entries
@@ -3342,25 +3577,36 @@ paths:
       tags:
       - Suggestions
       parameters:
-      - name: limit
+      - name: page
+        in: query
+        schema:
+          type: integer
+          default: 1
+          minimum: 1
+        required: false
+      - name: per
         in: query
         schema:
           type: integer
           default: 50
           maximum: 500
         required: false
+      - name: limit
+        in: query
+        schema:
+          type: integer
+          maximum: 500
+        required: false
+        description: Deprecated alias for `per` (transitional, for the unaudited Discord
+          bot).
       - name: offset
         in: query
         schema:
           type: integer
-          default: 0
+          minimum: 0
         required: false
-      - name: page
-        in: query
-        schema:
-          type: integer
-          default: 1
-        required: false
+        description: Deprecated; converted to a page number (transitional, for the
+          unaudited Discord bot).
       responses:
         '200':
           description: suggestions list
@@ -3494,25 +3740,36 @@ paths:
         schema:
           type: boolean
         required: false
-      - name: limit
+      - name: page
+        in: query
+        schema:
+          type: integer
+          default: 1
+          minimum: 1
+        required: false
+      - name: per
         in: query
         schema:
           type: integer
           default: 50
           maximum: 500
         required: false
+      - name: limit
+        in: query
+        schema:
+          type: integer
+          maximum: 500
+        required: false
+        description: Deprecated alias for `per` (transitional, for the unaudited Discord
+          bot).
       - name: offset
         in: query
         schema:
           type: integer
-          default: 0
+          minimum: 0
         required: false
-      - name: page
-        in: query
-        schema:
-          type: integer
-          default: 1
-        required: false
+        description: Deprecated; converted to a page number (transitional, for the
+          unaudited Discord bot).
       responses:
         '200':
           description: todos list
@@ -3752,25 +4009,36 @@ paths:
       tags:
       - User Socials
       parameters:
-      - name: limit
+      - name: page
+        in: query
+        schema:
+          type: integer
+          default: 1
+          minimum: 1
+        required: false
+      - name: per
         in: query
         schema:
           type: integer
           default: 50
           maximum: 500
         required: false
+      - name: limit
+        in: query
+        schema:
+          type: integer
+          maximum: 500
+        required: false
+        description: Deprecated alias for `per` (transitional, for the unaudited Discord
+          bot).
       - name: offset
         in: query
         schema:
           type: integer
-          default: 0
+          minimum: 0
         required: false
-      - name: page
-        in: query
-        schema:
-          type: integer
-          default: 1
-        required: false
+        description: Deprecated; converted to a page number (transitional, for the
+          unaudited Discord bot).
       responses:
         '200':
           description: user socials
@@ -3998,25 +4266,36 @@ paths:
         schema:
           type: string
         required: false
-      - name: limit
+      - name: page
+        in: query
+        schema:
+          type: integer
+          default: 1
+          minimum: 1
+        required: false
+      - name: per
         in: query
         schema:
           type: integer
           default: 50
           maximum: 500
         required: false
+      - name: limit
+        in: query
+        schema:
+          type: integer
+          maximum: 500
+        required: false
+        description: Deprecated alias for `per` (transitional, for the unaudited Discord
+          bot).
       - name: offset
         in: query
         schema:
           type: integer
-          default: 0
+          minimum: 0
         required: false
-      - name: page
-        in: query
-        schema:
-          type: integer
-          default: 1
-        required: false
+        description: Deprecated; converted to a page number (transitional, for the
+          unaudited Discord bot).
       responses:
         '200':
           description: users list
@@ -4198,25 +4477,36 @@ paths:
       - Voting Info
       description: Returns bot-managed voting metadata, newest round first.
       parameters:
-      - name: limit
+      - name: page
+        in: query
+        schema:
+          type: integer
+          default: 1
+          minimum: 1
+        required: false
+      - name: per
         in: query
         schema:
           type: integer
           default: 50
           maximum: 500
         required: false
+      - name: limit
+        in: query
+        schema:
+          type: integer
+          maximum: 500
+        required: false
+        description: Deprecated alias for `per` (transitional, for the unaudited Discord
+          bot).
       - name: offset
         in: query
         schema:
           type: integer
-          default: 0
+          minimum: 0
         required: false
-      - name: page
-        in: query
-        schema:
-          type: integer
-          default: 1
-        required: false
+        description: Deprecated; converted to a page number (transitional, for the
+          unaudited Discord bot).
       responses:
         '200':
           description: voting info list
