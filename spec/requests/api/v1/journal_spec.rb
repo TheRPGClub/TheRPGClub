@@ -8,8 +8,10 @@ RSpec.describe 'api/v1/journal', type: :request do
 
     get 'List a user\'s journaled games' do
       tags 'Journal'
-      description 'Games the user has journal entries for, with per-game entry counts and the last-entry timestamp. Ordered by game title; not paginated.'
+      description 'Games the user has journal entries for, with per-game entry counts and the last-entry timestamp. One row per game, ordered by game title.'
       produces 'application/json'
+      parameter name: :page, in: :query, schema: { type: :integer, default: 1, minimum: 1 }, required: false
+      parameter name: :per, in: :query, schema: { type: :integer, default: 50, maximum: 500 }, required: false
 
       response '200', 'journaled games list' do
         schema type: :object, properties: {
@@ -23,7 +25,8 @@ RSpec.describe 'api/v1/journal', type: :request do
                 last_entry_at: { type: :string, format: 'date-time', nullable: true }
               }
             }
-          }
+          },
+          meta: { '$ref' => '#/components/schemas/PaginationMeta' }
         }
       end
 

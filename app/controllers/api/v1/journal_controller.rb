@@ -10,29 +10,31 @@ module Api
       # GET /api/v1/users/:user_id/journal
       #
       # The games a user has journaled, with per-game entry counts and the
-      # last-entry timestamp. Bounded per user (you journal tens of games, not
-      # thousands), so it returns the whole list ordered by title rather than
-      # paginating.
+      # last-entry timestamp, ordered by game title. One row per game (entries
+      # are collapsed into a count), paginated like every other collection.
       def index
-        aggregates = UserGameJournalEntry
-          .where(user_id: params[:user_id])
-          .group(:gamedb_game_id)
-          .pluck(:gamedb_game_id, Arel.sql("COUNT(*)"), Arel.sql("MAX(created_at)"))
+        scope = GamedbGame
+          .joins("INNER JOIN user_game_journal_entries je ON je.gamedb_game_id = gamedb_games.game_id")
+          .where("je.user_id = ?", params[:user_id])
+          .group("gamedb_games.game_id")
+          .select("gamedb_games.*, COUNT(*) AS entry_count, MAX(je.created_at) AS last_entry_at")
+          .order(Arel.sql("gamedb_games.title ASC, gamedb_games.game_id ASC"))
+          .preload(:images)
 
-        games = GamedbGame.without_images.where(game_id: aggregates.map(&:first)).preload(:images).index_by(&:game_id)
+        # The grouped scope's `.count` returns a per-group hash, so hand pagy an
+        # explicit count of the distinct journaled games.
+        count = UserGameJournalEntry.where(user_id: params[:user_id]).distinct.count(:gamedb_game_id)
+        pagy, games = pagy(scope, count: count, **pagy_options)
 
-        data = aggregates.filter_map do |game_id, entry_count, last_entry_at|
-          game = games[game_id]
-          next unless game
-
+        data = games.map do |game|
           {
             "game" => GameSummaryResource.new(game).serializable_hash,
-            "entry_count" => entry_count,
-            "last_entry_at" => last_entry_at
+            "entry_count" => game["entry_count"],
+            "last_entry_at" => game["last_entry_at"]
           }
-        end.sort_by { |row| row["game"]["title"].to_s.downcase }
+        end
 
-        render json: { data: data }
+        render json: { data: data, meta: pagy_meta(pagy) }
       end
 
       # GET /api/v1/games/:id/journal

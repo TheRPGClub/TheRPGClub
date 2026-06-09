@@ -2085,7 +2085,22 @@ paths:
       tags:
       - Journal
       description: Games the user has journal entries for, with per-game entry counts
-        and the last-entry timestamp. Ordered by game title; not paginated.
+        and the last-entry timestamp. One row per game, ordered by game title.
+      parameters:
+      - name: page
+        in: query
+        schema:
+          type: integer
+          default: 1
+          minimum: 1
+        required: false
+      - name: per
+        in: query
+        schema:
+          type: integer
+          default: 50
+          maximum: 500
+        required: false
       responses:
         '200':
           description: journaled games list
@@ -2108,6 +2123,8 @@ paths:
                           type: string
                           format: date-time
                           nullable: true
+                  meta:
+                    "$ref": "#/components/schemas/PaginationMeta"
         '401':
           description: unauthenticated
           content:
