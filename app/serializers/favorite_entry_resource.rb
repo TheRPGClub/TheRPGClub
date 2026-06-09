@@ -1,11 +1,14 @@
 # frozen_string_literal: true
 
-# A UserGameFavorite with its embedded game. Replaces the legacy
-# `serialize_with_game` helper: all favorite columns plus `game`. Favorites have
-# no platform association.
+# A UserGameFavorite with its embedded game. Favorites have no platform
+# association.
+#
+# Consumer-audited allowlist (#36): the entry PK (`entry_id`), `user_id`
+# (game-scoped lists dedup players by it), `gamedb_game_id` and `note` are
+# read; `sort_order`, `created_at` and `updated_at` are dropped from output.
 class FavoriteEntryResource
   include BaseResource
 
-  columns_of UserGameFavorite
+  attributes :entry_id, :user_id, :gamedb_game_id, :note
   one :game, resource: GameSummaryResource
 end

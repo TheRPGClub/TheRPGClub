@@ -1,8 +1,8 @@
 # frozen_string_literal: true
 
-# Serializes a UserGameReview (all columns).
+# The reusable review shape. The consumer-audited column set lives in
+# ReviewFields (#36), shared with the embedded review variants.
 class ReviewResource
   include BaseResource
-
-  columns_of UserGameReview
+  include ReviewFields
 end
