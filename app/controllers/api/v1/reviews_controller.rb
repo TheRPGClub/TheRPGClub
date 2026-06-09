@@ -7,29 +7,13 @@ module Api
 
       def index
         scope = UserGameReview.where(user_id: params[:user_id])
-        records = scope
-          .order(created_at: :desc)
-          .limit(pagination_limit)
-          .offset(pagination_offset)
-
-        render json: {
-          data: records.as_json,
-          meta: { limit: pagination_limit, offset: pagination_offset }
-        }
+        render_collection(scope, default_order: { created_at: :desc })
       end
 
       def game_index
-        entries = UserGameReview
-          .where(gamedb_game_id: params[:id])
-          .includes(:user)
-          .order(Arel.sql("(body IS NOT NULL) DESC, created_at DESC"))
-          .limit(pagination_limit)
-          .offset(pagination_offset)
-
-        render json: {
-          data: ReviewUserEntryResource.new(entries).serializable_hash,
-          meta: { limit: pagination_limit, offset: pagination_offset }
-        }
+        scope = UserGameReview.where(gamedb_game_id: params[:id]).includes(:user)
+        render_collection(scope, resource: ReviewUserEntryResource,
+          default_order: Arel.sql("(body IS NOT NULL) DESC, created_at DESC"))
       end
 
       def show

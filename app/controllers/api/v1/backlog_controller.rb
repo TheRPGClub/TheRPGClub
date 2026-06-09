@@ -7,16 +7,7 @@ module Api
 
       def index
         scope = UserGameBacklog.where(user_id: params[:user_id]).preload(:game, :platform)
-        total = scope.count
-        records = scope
-          .order(sort_order: :asc, created_at: :desc)
-          .limit(pagination_limit)
-          .offset(pagination_offset)
-
-        render json: {
-          data: BacklogEntryResource.new(records).serializable_hash,
-          meta: { limit: pagination_limit, offset: pagination_offset, total: total }
-        }
+        render_collection(scope, resource: BacklogEntryResource, default_order: { sort_order: :asc, created_at: :desc })
       end
 
       def show

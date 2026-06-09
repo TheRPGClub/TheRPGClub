@@ -190,6 +190,10 @@ GEM
       bigdecimal (>= 3.0)
       ostruct (>= 0.2)
     ostruct (0.6.3)
+    pagy (43.5.6)
+      json
+      uri
+      yaml
     parallel (2.1.0)
     parser (3.3.11.1)
       ast (~> 2.4.1)
@@ -360,6 +364,7 @@ GEM
       base64
       websocket-extensions (>= 0.1.0)
     websocket-extensions (0.1.5)
+    yaml (0.4.0)
     zeitwerk (2.7.5)
 
 PLATFORMS
@@ -378,6 +383,7 @@ DEPENDENCIES
   faraday (~> 2.14)
   kamal
   oj
+  pagy
   pg (~> 1.1)
   puma (>= 5.0)
   rack-cors (~> 3.0)

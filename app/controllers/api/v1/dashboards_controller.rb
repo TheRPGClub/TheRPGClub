@@ -4,7 +4,7 @@ module Api
   module V1
     class DashboardsController < ApplicationController
       def show
-        limit = pagination_limit(default: 10, max: 20)
+        limit = clamp_per(params[:limit], default_per: 10, max_per: 20)
 
         gotm = GotmEntry
           .eager_load(game: :images)

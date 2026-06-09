@@ -6,16 +6,14 @@ module Api
       def index
         scope = params[:q].present? ? GamedbGame.search(params[:q]) : GamedbGame.without_images.order(:title)
         scope = apply_winner_filter(scope)
-        records = scope.preload(:images).limit(limit).offset(offset)
+        # The scope carries computed SELECT columns and (for search) a custom
+        # ORDER; strip both so the COUNT(*) is plain, then hand it to pagy.
+        count = scope.except(:select, :order).count(:all)
+        pagy, records = pagy(scope.preload(:images), **pagy_options(default_per: 25, max_per: 100).merge(count:))
 
         render json: {
           data: GameResource.new(records).serializable_hash,
-          meta: {
-            resource: "gamedb_games",
-            limit: limit,
-            offset: offset,
-            total: scope.except(:select, :order).count(:all)
-          }
+          meta: pagy_meta(pagy).merge(resource: "gamedb_games")
         }
       end
 
@@ -101,14 +99,6 @@ module Api
           .includes(:platform, :region)
           .sort_by { |release| [ release.release_date || Date.new(9999, 12, 31), release.platform.platform_name, release.region.region_name ] }
         ReleaseResource.new(releases).serializable_hash
-      end
-
-      def limit
-        [ [ params.fetch(:limit, 25).to_i, 1 ].max, 100 ].min
-      end
-
-      def offset
-        [ params.fetch(:offset, 0).to_i, 0 ].max
       end
     end
   end

@@ -11,20 +11,21 @@ RSpec.describe 'api/v1/games', type: :request do
       parameter name: :q, in: :query, schema: { type: :string }, required: false, description: 'Full-text search against game titles.'
       parameter name: :winner, in: :query, schema: { type: :string, enum: %w[gotm nr_gotm any] }, required: false,
         description: 'Filter to past GOTM winners, Non-Retro GOTM winners, or either.'
-      parameter name: :limit, in: :query, schema: { type: :integer, default: 25, minimum: 1, maximum: 100 }, required: false
-      parameter name: :offset, in: :query, schema: { type: :integer, default: 0, minimum: 0 }, required: false
+      parameter name: :page, in: :query, schema: { type: :integer, default: 1, minimum: 1 }, required: false
+      parameter name: :per, in: :query, schema: { type: :integer, default: 25, maximum: 100 }, required: false
+      parameter name: :limit, in: :query, schema: { type: :integer, maximum: 100 }, required: false,
+        description: 'Deprecated alias for `per` (transitional, for the unaudited Discord bot).'
+      parameter name: :offset, in: :query, schema: { type: :integer, minimum: 0 }, required: false,
+        description: 'Deprecated; converted to a page number (transitional, for the unaudited Discord bot).'
 
       response '200', 'games list' do
         schema type: :object, properties: {
           data: { type: :array, items: { type: :object, additionalProperties: true } },
           meta: {
-            type: :object,
-            properties: {
-              resource: { type: :string, example: 'gamedb_games' },
-              limit: { type: :integer },
-              offset: { type: :integer },
-              total: { type: :integer }
-            }
+            allOf: [
+              { '$ref' => '#/components/schemas/PaginationMeta' },
+              { type: :object, properties: { resource: { type: :string, example: 'gamedb_games' } } }
+            ]
           }
         }
       end
@@ -169,8 +170,12 @@ RSpec.describe 'api/v1/games', type: :request do
     get 'List users currently playing this game' do
       tags 'Games'
       produces 'application/json'
-      parameter name: :limit, in: :query, schema: { type: :integer, default: 50 }, required: false
-      parameter name: :offset, in: :query, schema: { type: :integer, default: 0 }, required: false
+      parameter name: :page, in: :query, schema: { type: :integer, default: 1, minimum: 1 }, required: false
+      parameter name: :per, in: :query, schema: { type: :integer, default: 50, maximum: 500 }, required: false
+      parameter name: :limit, in: :query, schema: { type: :integer, maximum: 500 }, required: false,
+        description: 'Deprecated alias for `per` (transitional, for the unaudited Discord bot).'
+      parameter name: :offset, in: :query, schema: { type: :integer, minimum: 0 }, required: false,
+        description: 'Deprecated; converted to a page number (transitional, for the unaudited Discord bot).'
 
       response '200', 'now-playing entries' do
         schema type: :object, properties: {
@@ -191,8 +196,12 @@ RSpec.describe 'api/v1/games', type: :request do
     get 'List completions for this game' do
       tags 'Games'
       produces 'application/json'
-      parameter name: :limit, in: :query, schema: { type: :integer, default: 50 }, required: false
-      parameter name: :offset, in: :query, schema: { type: :integer, default: 0 }, required: false
+      parameter name: :page, in: :query, schema: { type: :integer, default: 1, minimum: 1 }, required: false
+      parameter name: :per, in: :query, schema: { type: :integer, default: 50, maximum: 500 }, required: false
+      parameter name: :limit, in: :query, schema: { type: :integer, maximum: 500 }, required: false,
+        description: 'Deprecated alias for `per` (transitional, for the unaudited Discord bot).'
+      parameter name: :offset, in: :query, schema: { type: :integer, minimum: 0 }, required: false,
+        description: 'Deprecated; converted to a page number (transitional, for the unaudited Discord bot).'
 
       response '200', 'completions for game' do
         schema type: :object, properties: {
@@ -214,8 +223,12 @@ RSpec.describe 'api/v1/games', type: :request do
       tags 'Games'
       description 'Reviews are sorted so those with non-null bodies appear first.'
       produces 'application/json'
-      parameter name: :limit, in: :query, schema: { type: :integer, default: 50 }, required: false
-      parameter name: :offset, in: :query, schema: { type: :integer, default: 0 }, required: false
+      parameter name: :page, in: :query, schema: { type: :integer, default: 1, minimum: 1 }, required: false
+      parameter name: :per, in: :query, schema: { type: :integer, default: 50, maximum: 500 }, required: false
+      parameter name: :limit, in: :query, schema: { type: :integer, maximum: 500 }, required: false,
+        description: 'Deprecated alias for `per` (transitional, for the unaudited Discord bot).'
+      parameter name: :offset, in: :query, schema: { type: :integer, minimum: 0 }, required: false,
+        description: 'Deprecated; converted to a page number (transitional, for the unaudited Discord bot).'
 
       response '200', 'reviews for game' do
         schema type: :object, properties: {

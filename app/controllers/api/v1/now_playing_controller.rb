@@ -4,31 +4,13 @@ module Api
   module V1
     class NowPlayingController < ApplicationController
       def index
-        entries = UserNowPlaying
-          .where(gamedb_game_id: params[:id])
-          .includes(:user)
-          .order(added_at: :desc)
-          .limit(pagination_limit)
-          .offset(pagination_offset)
-
-        render json: {
-          data: NowPlayingUserEntryResource.new(entries).serializable_hash,
-          meta: { limit: pagination_limit, offset: pagination_offset }
-        }
+        scope = UserNowPlaying.where(gamedb_game_id: params[:id]).includes(:user)
+        render_collection(scope, resource: NowPlayingUserEntryResource, default_order: { added_at: :desc })
       end
 
       def user_index
         scope = UserNowPlaying.where(user_id: params[:user_id]).preload(:game, :platform)
-        total = scope.count
-        records = scope
-          .order(added_at: :desc)
-          .limit(pagination_limit)
-          .offset(pagination_offset)
-
-        render json: {
-          data: NowPlayingEntryResource.new(records).serializable_hash,
-          meta: { limit: pagination_limit, offset: pagination_offset, total: total }
-        }
+        render_collection(scope, resource: NowPlayingEntryResource, default_order: { added_at: :desc })
       end
     end
   end

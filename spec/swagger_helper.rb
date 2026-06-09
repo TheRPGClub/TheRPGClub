@@ -57,11 +57,16 @@ RSpec.configure do |config|
           },
           PaginationMeta: {
             type: :object,
+            description: 'Page-native pagination metadata (from pagy).',
             properties: {
-              limit: { type: :integer, example: 50 },
-              offset: { type: :integer, example: 0 },
-              total: { type: :integer, example: 123, nullable: true }
-            }
+              page: { type: :integer, example: 1 },
+              pages: { type: :integer, example: 5 },
+              count: { type: :integer, example: 123 },
+              per: { type: :integer, example: 50 },
+              prev: { type: :integer, example: nil, nullable: true },
+              next: { type: :integer, example: 2, nullable: true }
+            },
+            required: %w[page pages count per]
           },
           DeletedResponse: {
             type: :object,

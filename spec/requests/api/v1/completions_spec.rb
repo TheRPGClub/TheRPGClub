@@ -9,9 +9,12 @@ RSpec.describe 'api/v1/completions', type: :request do
     get 'List a user\'s completions' do
       tags 'Completions'
       produces 'application/json'
-      parameter name: :limit, in: :query, schema: { type: :integer, default: 50, maximum: 500 }, required: false
-      parameter name: :offset, in: :query, schema: { type: :integer, default: 0 }, required: false
-      parameter name: :page, in: :query, schema: { type: :integer, default: 1 }, required: false
+      parameter name: :page, in: :query, schema: { type: :integer, default: 1, minimum: 1 }, required: false
+      parameter name: :per, in: :query, schema: { type: :integer, default: 50, maximum: 500 }, required: false
+      parameter name: :limit, in: :query, schema: { type: :integer, maximum: 500 }, required: false,
+        description: 'Deprecated alias for `per` (transitional, for the unaudited Discord bot).'
+      parameter name: :offset, in: :query, schema: { type: :integer, minimum: 0 }, required: false,
+        description: 'Deprecated; converted to a page number (transitional, for the unaudited Discord bot).'
 
       response '200', 'completions list' do
         schema type: :object, properties: {
