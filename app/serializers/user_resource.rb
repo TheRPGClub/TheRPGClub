@@ -1,8 +1,9 @@
 # frozen_string_literal: true
 
 # The full user-profile payload served by users#show. Replaces the hand-built
-# `user.as_json.merge(...)`: every non-binary column plus `membership`, the
-# embedded `socials`, the four embedded preview lists and the `counts` summary.
+# `user.as_json.merge(...)`: the consumer-audited UserFields columns plus
+# `membership`, the embedded `socials`, the four embedded preview lists and the
+# `counts` summary.
 #
 # The previews and counts are not associations on the user — the controller
 # pre-fetches limited, preloaded, ordered slices (and the count tallies) and
@@ -13,8 +14,8 @@
 # fan-out (TheRPGClub-www#11).
 class UserResource
   include BaseResource
+  include UserFields
 
-  columns_of RpgClubUser, except: RpgClubUser::BINARY_COLUMNS
   attributes :membership
   many :socials, resource: UserSocialResource
 

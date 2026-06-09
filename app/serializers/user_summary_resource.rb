@@ -1,10 +1,9 @@
 # frozen_string_literal: true
 
-# The reusable embedded-user shape: every RpgClubUser column except the binary
-# image blobs. Matches `user.as_json(except: RpgClubUser::BINARY_COLUMNS)` and
-# the `RpgClubUser.without_images` scope (which selects exactly these columns).
+# The reusable embedded-user shape, also served directly by users#index (the
+# members list). The consumer-audited column set lives in UserFields (#36), so
+# this and the full UserResource profile payload never drift apart.
 class UserSummaryResource
   include BaseResource
-
-  columns_of RpgClubUser, except: RpgClubUser::BINARY_COLUMNS
+  include UserFields
 end
