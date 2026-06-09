@@ -6,7 +6,7 @@ module Api
       def index
         scope = RpgClubTodo.all
         scope = scope.where(is_completed: ActiveModel::Type::Boolean.new.cast(params[:completed])) if params[:completed].present?
-        render_collection(scope, default_order: { created_at: :desc })
+        render_collection(scope, resource: TodoResource, default_order: { created_at: :desc })
       end
 
       def show

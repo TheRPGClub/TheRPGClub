@@ -4,7 +4,7 @@ module Api
   module V1
     class StarboardController < ApplicationController
       def index
-        render_collection(RpgClubStarboardEntry.all, default_order: { created_at: :desc })
+        render_collection(RpgClubStarboardEntry.all, resource: StarboardEntryResource, default_order: { created_at: :desc })
       end
 
       def show

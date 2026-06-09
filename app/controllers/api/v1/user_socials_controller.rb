@@ -7,7 +7,7 @@ module Api
 
       def index
         scope = UserSocial.where(user_id: params[:user_id]).includes(:social_platform)
-        render_collection(scope, default_order: { id: :asc })
+        render_collection(scope, resource: UserSocialResource, default_order: { id: :asc })
       end
 
       def show

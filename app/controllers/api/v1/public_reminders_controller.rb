@@ -6,7 +6,7 @@ module Api
       def index
         scope = RpgClubPublicReminder.all
         scope = scope.where(enabled: ActiveModel::Type::Boolean.new.cast(params[:enabled])) if params[:enabled].present?
-        render_collection(scope, default_order: { due_at: :asc })
+        render_collection(scope, resource: PublicReminderResource, default_order: { due_at: :asc })
       end
 
       def show

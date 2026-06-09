@@ -4,7 +4,7 @@ module Api
   module V1
     class SocialPlatformsController < ApplicationController
       def index
-        render_collection(SocialPlatform.all, default_order: { position: :asc, label: :asc })
+        render_collection(SocialPlatform.all, resource: SocialPlatformResource, default_order: { position: :asc, label: :asc })
       end
 
       def create
