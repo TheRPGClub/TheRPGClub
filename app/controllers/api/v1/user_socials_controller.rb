@@ -12,20 +12,20 @@ module Api
 
       def show
         record = UserSocial.includes(:social_platform).find(params[:id])
-        render json: { data: serialize(record) }
+        render json: { data: UserSocialResource.new(record).serializable_hash }
       end
 
       def create
         record = UserSocial.create!(request_data.merge("user_id" => params[:user_id]))
         record = UserSocial.includes(:social_platform).find(record.id)
-        render json: { data: serialize(record) }, status: :created
+        render json: { data: UserSocialResource.new(record).serializable_hash }, status: :created
       end
 
       def update
         record = UserSocial.find(params[:id])
         record.update!(request_data)
         record = UserSocial.includes(:social_platform).find(record.id)
-        render json: { data: serialize(record) }
+        render json: { data: UserSocialResource.new(record).serializable_hash }
       end
 
       def destroy
@@ -34,10 +34,6 @@ module Api
       end
 
       private
-
-      def serialize(record)
-        record.as_json.merge("social_platform" => record.social_platform.as_json)
-      end
 
       def resolve_owner_id
         return params[:user_id] if params[:user_id].present?
