@@ -4649,7 +4649,8 @@ paths:
       tags:
       - Users
       description: 'Aggregated profile: user record + membership, socials, and preview
-        lists/counts for now-playing, favorites, reviews, and completions.'
+        lists/counts for now-playing, favorites, reviews, completions, and journal
+        (recently journaled games).'
       parameters:
       - name: preview_limit
         in: query
@@ -4658,7 +4659,8 @@ paths:
           default: 10
           maximum: 50
         required: false
-        description: Per-preview-list size cap (now_playing, favorites, reviews, completions).
+        description: Per-preview-list size cap (now_playing, favorites, reviews, completions,
+          journal).
       responses:
         '200':
           description: user detail
@@ -4700,6 +4702,11 @@ paths:
                         items:
                           type: object
                           additionalProperties: true
+                      journal:
+                        type: array
+                        items:
+                          type: object
+                          additionalProperties: true
                       counts:
                         type: object
                         properties:
@@ -4714,6 +4721,8 @@ paths:
                           backlog:
                             type: integer
                           collections:
+                            type: integer
+                          journal:
                             type: integer
         '404':
           description: user not found

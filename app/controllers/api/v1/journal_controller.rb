@@ -13,28 +13,16 @@ module Api
       # last-entry timestamp, ordered by game title. One row per game (entries
       # are collapsed into a count), paginated like every other collection.
       def index
-        scope = GamedbGame
-          .joins("INNER JOIN user_game_journal_entries je ON je.gamedb_game_id = gamedb_games.game_id")
-          .where("je.user_id = ?", params[:user_id])
-          .group("gamedb_games.game_id")
-          .select("gamedb_games.*, COUNT(*) AS entry_count, MAX(je.created_at) AS last_entry_at")
+        scope = UserGameJournalEntry
+          .journaled_games_for(params[:user_id])
           .order(Arel.sql("gamedb_games.title ASC, gamedb_games.game_id ASC"))
-          .preload(:images)
 
         # The grouped scope's `.count` returns a per-group hash, so hand pagy an
         # explicit count of the distinct journaled games.
         count = UserGameJournalEntry.where(user_id: params[:user_id]).distinct.count(:gamedb_game_id)
         pagy, games = pagy(scope, count: count, **pagy_options)
 
-        data = games.map do |game|
-          {
-            "game" => GameSummaryResource.new(game).serializable_hash,
-            "entry_count" => game["entry_count"],
-            "last_entry_at" => game["last_entry_at"]
-          }
-        end
-
-        render json: { data: data, meta: pagy_meta(pagy) }
+        render json: { data: JournaledGameResource.new(games).serializable_hash, meta: pagy_meta(pagy) }
       end
 
       # GET /api/v1/games/:id/journal
