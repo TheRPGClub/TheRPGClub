@@ -3164,6 +3164,168 @@ paths:
             application/json:
               schema:
                 "$ref": "#/components/schemas/Error"
+  "/api/v1/users/{user_id}/presence_prompts":
+    parameters:
+    - name: user_id
+      in: path
+      schema:
+        type: string
+      required: true
+    get:
+      summary: List a user's presence prompt history
+      tags:
+      - Presence Prompts
+      description: Read-only history of presence prompts the bot sent the user after
+        detecting (via Discord rich presence) that they were playing a game. Ordered
+        newest first. The bot owns all writes; the user-settable side is the opt-out
+        preference.
+      parameters:
+      - name: page
+        in: query
+        schema:
+          type: integer
+          default: 1
+          minimum: 1
+        required: false
+      - name: per
+        in: query
+        schema:
+          type: integer
+          default: 50
+          maximum: 500
+        required: false
+      responses:
+        '200':
+          description: presence prompt history
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  data:
+                    type: array
+                    items:
+                      type: object
+                      additionalProperties: true
+                  meta:
+                    "$ref": "#/components/schemas/PaginationMeta"
+        '401':
+          description: unauthenticated
+          content:
+            application/json:
+              schema:
+                "$ref": "#/components/schemas/Error"
+  "/api/v1/users/{user_id}/presence_prompt_opts":
+    parameters:
+    - name: user_id
+      in: path
+      schema:
+        type: string
+      required: true
+    get:
+      summary: Show a user's presence-prompt opt-out preference
+      tags:
+      - Presence Prompts
+      description: 'The user''s opt-out preference as a single document: `all` (whether
+        every game is silenced) plus the list of per-game opt-outs.'
+      responses:
+        '200':
+          description: opt-out preference
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  data:
+                    type: object
+                    properties:
+                      user_id:
+                        type: string
+                      all:
+                        type: boolean
+                        description: Whether the user is opted out of prompts for
+                          every game.
+                      games:
+                        type: array
+                        description: Per-game opt-outs.
+                        items:
+                          type: object
+                          properties:
+                            game_title:
+                              type: string
+                            game_title_norm:
+                              type: string
+                            created_at:
+                              type: string
+                              format: date-time
+                    required:
+                    - user_id
+                    - all
+                    - games
+        '401':
+          description: unauthenticated
+          content:
+            application/json:
+              schema:
+                "$ref": "#/components/schemas/Error"
+    put:
+      summary: Replace a user's presence-prompt opt-out preference
+      tags:
+      - Presence Prompts
+      description: Owner-only. Replaces the entire opt-out set. `all` toggles the
+        silence-everything opt-out; `games` lists titles to silence individually (normalized
+        like the bot; blanks and duplicates dropped). An empty or omitted set clears
+        the opt-outs (opt back in).
+      parameters: []
+      responses:
+        '200':
+          description: updated opt-out preference
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  data:
+                    type: object
+                    additionalProperties: true
+        '403':
+          description: forbidden — caller is not the owner
+          content:
+            application/json:
+              schema:
+                "$ref": "#/components/schemas/Error"
+        '400':
+          description: missing `data` parameter
+          content:
+            application/json:
+              schema:
+                "$ref": "#/components/schemas/Error"
+        '401':
+          description: unauthenticated
+          content:
+            application/json:
+              schema:
+                "$ref": "#/components/schemas/Error"
+      requestBody:
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                data:
+                  type: object
+                  properties:
+                    all:
+                      type: boolean
+                      description: Opt out of prompts for every game.
+                    games:
+                      type: array
+                      items:
+                        type: string
+                      description: Game titles to silence individually.
+              required:
+              - data
+        required: true
   "/api/v1/public_reminders":
     get:
       summary: List public reminders
