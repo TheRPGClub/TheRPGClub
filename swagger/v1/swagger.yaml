@@ -5931,6 +5931,75 @@ paths:
             application/json:
               schema:
                 "$ref": "#/components/schemas/Error"
+  "/api/v1/games/{id}/threads":
+    parameters:
+    - name: id
+      in: path
+      schema:
+        type: string
+      required: true
+      description: GamedbGame game_id.
+    get:
+      summary: List the Discord threads linked to a game
+      tags:
+      - Threads
+      description: The Discord threads mapped to the game through `thread_game_links`
+        (a thread can link to several games), newest thread first. Each row carries
+        the thread metadata (`thread_name`, `forum_channel_id`, `is_archived`, `last_seen_at`)
+        plus a computed `jump_url` deep link. Read-only — the bot owns every thread/link
+        write.
+      parameters:
+      - name: page
+        in: query
+        schema:
+          type: integer
+          default: 1
+          minimum: 1
+        required: false
+      - name: per
+        in: query
+        schema:
+          type: integer
+          default: 50
+          maximum: 500
+        required: false
+      - name: limit
+        in: query
+        schema:
+          type: integer
+          maximum: 500
+        required: false
+        description: Deprecated alias for `per` (transitional, for the unaudited Discord
+          bot).
+      - name: offset
+        in: query
+        schema:
+          type: integer
+          minimum: 0
+        required: false
+        description: Deprecated; converted to a page number (transitional, for the
+          unaudited Discord bot).
+      responses:
+        '200':
+          description: threads list
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  data:
+                    type: array
+                    items:
+                      type: object
+                      additionalProperties: true
+                  meta:
+                    "$ref": "#/components/schemas/PaginationMeta"
+        '401':
+          description: unauthenticated
+          content:
+            application/json:
+              schema:
+                "$ref": "#/components/schemas/Error"
   "/api/v1/todos":
     get:
       summary: List todos

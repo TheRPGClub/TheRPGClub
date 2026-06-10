@@ -28,6 +28,7 @@ Rails.application.routes.draw do
           get "reviews", to: "reviews#game_index"
           get "journal", to: "journal#game_index"
           get "release_announcements", to: "release_announcements#game_index"
+          get "threads", to: "threads#game_index"
         end
       end
 
