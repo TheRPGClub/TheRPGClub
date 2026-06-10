@@ -1441,6 +1441,323 @@ paths:
             application/json:
               schema:
                 "$ref": "#/components/schemas/Error"
+  "/api/v1/game_keys":
+    get:
+      summary: List available game keys
+      tags:
+      - Game Keys
+      description: The unclaimed keys in the giveaway, ordered by game title (case-insensitive)
+        then key_id. Each key embeds its `game` (name + cover/art/logo) when the title
+        is linked to a GamedbGame, else `game` is null and only `game_title` is set.
+        The secret `key_value` is never included here — it is revealed only to the
+        claimer on a successful claim.
+      parameters:
+      - name: page
+        in: query
+        schema:
+          type: integer
+          default: 1
+          minimum: 1
+        required: false
+      - name: per
+        in: query
+        schema:
+          type: integer
+          default: 50
+          maximum: 500
+        required: false
+      - name: limit
+        in: query
+        schema:
+          type: integer
+          maximum: 500
+        required: false
+        description: Deprecated alias for `per` (transitional, for the unaudited Discord
+          bot).
+      - name: offset
+        in: query
+        schema:
+          type: integer
+          minimum: 0
+        required: false
+        description: Deprecated; converted to a page number (transitional, for the
+          unaudited Discord bot).
+      responses:
+        '200':
+          description: available game keys
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  data:
+                    type: array
+                    items:
+                      type: object
+                      properties:
+                        key_id:
+                          type: integer
+                        game_title:
+                          type: string
+                        platform:
+                          type: string
+                        gamedb_game_id:
+                          type: integer
+                          nullable: true
+                        donor_user_id:
+                          type: string
+                        claimed_by_user_id:
+                          type: string
+                          nullable: true
+                        claimed_at:
+                          type: string
+                          format: date-time
+                          nullable: true
+                        donor_notify_on_claim:
+                          type: boolean
+                        created_at:
+                          type: string
+                          format: date-time
+                        updated_at:
+                          type: string
+                          format: date-time
+                        game:
+                          type: object
+                          nullable: true
+                          additionalProperties: true
+                          description: The linked GamedbGame (title + cover/art/logo
+                            URLs), or null when the key only carries a free-text game_title.
+                  meta:
+                    "$ref": "#/components/schemas/PaginationMeta"
+        '401':
+          description: unauthenticated
+          content:
+            application/json:
+              schema:
+                "$ref": "#/components/schemas/Error"
+    post:
+      summary: Donate a game key
+      tags:
+      - Game Keys
+      description: 'Owner-only: a Discord caller may only donate as themselves (`donor_user_id`
+        must be their own id); the bot service token may donate on anyone''s behalf.
+        The claim fields are read-only on donation.'
+      parameters: []
+      responses:
+        '201':
+          description: key donated
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  data:
+                    type: object
+                    additionalProperties: true
+        '403':
+          description: forbidden — caller is not the named donor
+          content:
+            application/json:
+              schema:
+                "$ref": "#/components/schemas/Error"
+        '422':
+          description: validation failed
+          content:
+            application/json:
+              schema:
+                "$ref": "#/components/schemas/Error"
+        '400':
+          description: missing `data` parameter
+          content:
+            application/json:
+              schema:
+                "$ref": "#/components/schemas/Error"
+        '401':
+          description: unauthenticated
+          content:
+            application/json:
+              schema:
+                "$ref": "#/components/schemas/Error"
+      requestBody:
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                data:
+                  type: object
+                  additionalProperties: true
+                  description: 'Key attributes. Required: `platform`, `key_value`,
+                    `donor_user_id`, plus `game_title` OR `gamedb_game_id` (when only
+                    `gamedb_game_id` is given the title is backfilled from that game).
+                    Optional: `donor_notify_on_claim`.'
+                  properties:
+                    game_title:
+                      type: string
+                    gamedb_game_id:
+                      type: integer
+                      description: Links the key to a GamedbGame for the embedded
+                        game card.
+                    platform:
+                      type: string
+                    key_value:
+                      type: string
+                    donor_user_id:
+                      type: string
+                    donor_notify_on_claim:
+                      type: boolean
+                  required:
+                  - platform
+                  - key_value
+                  - donor_user_id
+              required:
+              - data
+        required: true
+  "/api/v1/game_keys/{id}/claim":
+    parameters:
+    - name: id
+      in: path
+      schema:
+        type: string
+      required: true
+      description: RpgClubGameKey key_id.
+    post:
+      summary: Claim a game key
+      tags:
+      - Game Keys
+      description: Atomically claims an unclaimed key and returns it with the secret
+        `key_value` revealed to the claimer. A Discord caller claims as themselves;
+        the bot service token claims on behalf of the `claimed_by_user_id` supplied
+        in the body.
+      parameters: []
+      responses:
+        '200':
+          description: claimed — includes the revealed `key_value`
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  data:
+                    type: object
+                    additionalProperties: true
+                    description: The claimed key. Unlike every other response, this
+                      includes `key_value`.
+                    properties:
+                      key_id:
+                        type: integer
+                      game_title:
+                        type: string
+                      platform:
+                        type: string
+                      gamedb_game_id:
+                        type: integer
+                        nullable: true
+                      key_value:
+                        type: string
+                      donor_user_id:
+                        type: string
+                      claimed_by_user_id:
+                        type: string
+                      claimed_at:
+                        type: string
+                        format: date-time
+                      donor_notify_on_claim:
+                        type: boolean
+                      game:
+                        type: object
+                        nullable: true
+                        additionalProperties: true
+        '409':
+          description: already claimed
+          content:
+            application/json:
+              schema:
+                "$ref": "#/components/schemas/Error"
+        '422':
+          description: no claimant resolved (service token omitted `claimed_by_user_id`)
+          content:
+            application/json:
+              schema:
+                "$ref": "#/components/schemas/Error"
+        '404':
+          description: not found
+          content:
+            application/json:
+              schema:
+                "$ref": "#/components/schemas/Error"
+        '401':
+          description: unauthenticated
+          content:
+            application/json:
+              schema:
+                "$ref": "#/components/schemas/Error"
+      requestBody:
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                data:
+                  type: object
+                  additionalProperties: true
+                  description: 'Service-token only: `claimed_by_user_id` names the
+                    Discord user the claim is recorded for. Ignored for Discord callers
+                    (they claim as themselves).'
+                  properties:
+                    claimed_by_user_id:
+                      type: string
+  "/api/v1/users/{user_id}/game_keys":
+    parameters:
+    - name: user_id
+      in: path
+      schema:
+        type: string
+      required: true
+      description: Discord user id of the donor.
+    get:
+      summary: List a user's donated game keys
+      tags:
+      - Game Keys
+      description: The keys donated by the user (claimed and unclaimed), newest first,
+        each embedding its `game` (null when unlinked). The secret `key_value` is
+        never included.
+      parameters:
+      - name: page
+        in: query
+        schema:
+          type: integer
+          default: 1
+          minimum: 1
+        required: false
+      - name: per
+        in: query
+        schema:
+          type: integer
+          default: 50
+          maximum: 500
+        required: false
+      responses:
+        '200':
+          description: donated game keys
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  data:
+                    type: array
+                    items:
+                      type: object
+                      additionalProperties: true
+                  meta:
+                    "$ref": "#/components/schemas/PaginationMeta"
+        '401':
+          description: unauthenticated
+          content:
+            application/json:
+              schema:
+                "$ref": "#/components/schemas/Error"
   "/api/v1/games":
     get:
       summary: List games

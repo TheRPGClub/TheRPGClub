@@ -73,6 +73,18 @@ class RpgClubUser < ApplicationRecord
     primary_key: :user_id,
     dependent: nil,
     inverse_of: :user
+  has_many :donated_game_keys,
+    class_name: "RpgClubGameKey",
+    foreign_key: :donor_user_id,
+    primary_key: :user_id,
+    dependent: nil,
+    inverse_of: :donor
+  has_many :claimed_game_keys,
+    class_name: "RpgClubGameKey",
+    foreign_key: :claimed_by_user_id,
+    primary_key: :user_id,
+    dependent: nil,
+    inverse_of: :claimant
   has_many :uploaded_game_images,
     class_name: "GamedbGameImage",
     foreign_key: :uploaded_by_user_id,
