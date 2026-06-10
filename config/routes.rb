@@ -55,6 +55,7 @@ Rails.application.routes.draw do
           post "journal", to: "journal#create"
           get "reminders", to: "reminders#index"
           post "reminders", to: "reminders#create"
+          get "game_keys", to: "game_keys#user_index"
         end
       end
 
@@ -67,6 +68,11 @@ Rails.application.routes.draw do
       resources :user_socials, only: %i[show update destroy]
       resources :journal_entries, only: %i[show update destroy], controller: "journal"
       resources :reminders, only: %i[show update destroy]
+      resources :game_keys, only: %i[index create] do
+        member do
+          post "claim", to: "game_keys#claim"
+        end
+      end
       resources :release_announcements, only: %i[show create update destroy] do
         member { post "skip" }
       end

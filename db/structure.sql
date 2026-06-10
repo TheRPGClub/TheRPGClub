@@ -946,7 +946,8 @@ CREATE TABLE public.rpg_club_game_keys (
     claimed_at timestamp(6) with time zone,
     created_at timestamp(6) with time zone DEFAULT statement_timestamp() NOT NULL,
     updated_at timestamp(6) with time zone DEFAULT statement_timestamp() NOT NULL,
-    donor_notify_on_claim boolean DEFAULT false NOT NULL
+    donor_notify_on_claim boolean DEFAULT false NOT NULL,
+    gamedb_game_id bigint
 );
 
 
@@ -3321,6 +3322,13 @@ CREATE INDEX ix_game_keys_available ON public.rpg_club_game_keys USING btree (cl
 
 
 --
+-- Name: ix_game_keys_game; Type: INDEX; Schema: public; Owner: -
+--
+
+CREATE INDEX ix_game_keys_game ON public.rpg_club_game_keys USING btree (gamedb_game_id);
+
+
+--
 -- Name: ix_game_keys_title; Type: INDEX; Schema: public; Owner: -
 --
 
@@ -3991,6 +3999,14 @@ ALTER TABLE ONLY public.gamedb_game_images
 
 
 --
+-- Name: rpg_club_game_keys fk_rpg_club_game_keys_gamedb; Type: FK CONSTRAINT; Schema: public; Owner: -
+--
+
+ALTER TABLE ONLY public.rpg_club_game_keys
+    ADD CONSTRAINT fk_rpg_club_game_keys_gamedb FOREIGN KEY (gamedb_game_id) REFERENCES public.gamedb_games(game_id) ON DELETE SET NULL;
+
+
+--
 -- Name: rpg_club_rss_feed_items fk_rss_feed_items_feed; Type: FK CONSTRAINT; Schema: public; Owner: -
 --
 
@@ -4149,6 +4165,7 @@ ALTER TABLE ONLY public.rpg_club_xbox_collection_import_items
 SET search_path TO public;
 
 INSERT INTO "schema_migrations" (version) VALUES
+('20260610000100'),
 ('20260517000700'),
 ('20260517000600'),
 ('20260517000500'),
