@@ -601,6 +601,106 @@ paths:
             application/json:
               schema:
                 "$ref": "#/components/schemas/Error"
+  "/api/v1/companies":
+    get:
+      summary: List companies
+      tags:
+      - Companies
+      description: Returns the IGDB-curated companies (developers/publishers). Supports
+        `q` for case-insensitive name search.
+      parameters:
+      - name: q
+        in: query
+        schema:
+          type: string
+        required: false
+        description: Search term against `name`.
+      - name: page
+        in: query
+        schema:
+          type: integer
+          default: 1
+          minimum: 1
+        required: false
+      - name: per
+        in: query
+        schema:
+          type: integer
+          default: 50
+          maximum: 500
+        required: false
+      - name: limit
+        in: query
+        schema:
+          type: integer
+          maximum: 500
+        required: false
+        description: Deprecated alias for `per` (transitional, for the unaudited Discord
+          bot).
+      - name: offset
+        in: query
+        schema:
+          type: integer
+          minimum: 0
+        required: false
+        description: Deprecated; converted to a page number (transitional, for the
+          unaudited Discord bot).
+      responses:
+        '200':
+          description: companies list
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  data:
+                    type: array
+                    items:
+                      type: object
+                      additionalProperties: true
+                  meta:
+                    "$ref": "#/components/schemas/PaginationMeta"
+        '401':
+          description: unauthenticated
+          content:
+            application/json:
+              schema:
+                "$ref": "#/components/schemas/Error"
+  "/api/v1/companies/{id}":
+    parameters:
+    - name: id
+      in: path
+      schema:
+        type: string
+      required: true
+      description: GamedbCompany id.
+    get:
+      summary: Show company
+      tags:
+      - Companies
+      responses:
+        '200':
+          description: company
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  data:
+                    type: object
+                    additionalProperties: true
+        '404':
+          description: company not found
+          content:
+            application/json:
+              schema:
+                "$ref": "#/components/schemas/Error"
+        '401':
+          description: unauthenticated
+          content:
+            application/json:
+              schema:
+                "$ref": "#/components/schemas/Error"
   "/api/v1/users/{user_id}/completions":
     parameters:
     - name: user_id
@@ -1178,6 +1278,106 @@ paths:
                 "$ref": "#/components/schemas/Error"
         '404':
           description: not found
+          content:
+            application/json:
+              schema:
+                "$ref": "#/components/schemas/Error"
+        '401':
+          description: unauthenticated
+          content:
+            application/json:
+              schema:
+                "$ref": "#/components/schemas/Error"
+  "/api/v1/franchises":
+    get:
+      summary: List franchises
+      tags:
+      - Franchises
+      description: Returns the IGDB-curated game franchises. Supports `q` for case-insensitive
+        name search.
+      parameters:
+      - name: q
+        in: query
+        schema:
+          type: string
+        required: false
+        description: Search term against `name`.
+      - name: page
+        in: query
+        schema:
+          type: integer
+          default: 1
+          minimum: 1
+        required: false
+      - name: per
+        in: query
+        schema:
+          type: integer
+          default: 50
+          maximum: 500
+        required: false
+      - name: limit
+        in: query
+        schema:
+          type: integer
+          maximum: 500
+        required: false
+        description: Deprecated alias for `per` (transitional, for the unaudited Discord
+          bot).
+      - name: offset
+        in: query
+        schema:
+          type: integer
+          minimum: 0
+        required: false
+        description: Deprecated; converted to a page number (transitional, for the
+          unaudited Discord bot).
+      responses:
+        '200':
+          description: franchises list
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  data:
+                    type: array
+                    items:
+                      type: object
+                      additionalProperties: true
+                  meta:
+                    "$ref": "#/components/schemas/PaginationMeta"
+        '401':
+          description: unauthenticated
+          content:
+            application/json:
+              schema:
+                "$ref": "#/components/schemas/Error"
+  "/api/v1/franchises/{id}":
+    parameters:
+    - name: id
+      in: path
+      schema:
+        type: string
+      required: true
+      description: GamedbFranchise id.
+    get:
+      summary: Show franchise
+      tags:
+      - Franchises
+      responses:
+        '200':
+          description: franchise
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  data:
+                    type: object
+                    additionalProperties: true
+        '404':
+          description: franchise not found
           content:
             application/json:
               schema:
@@ -2255,6 +2455,106 @@ paths:
             application/json:
               schema:
                 "$ref": "#/components/schemas/Error"
+  "/api/v1/genres":
+    get:
+      summary: List genres
+      tags:
+      - Genres
+      description: Returns the IGDB-curated game genres. Supports `q` for case-insensitive
+        name search.
+      parameters:
+      - name: q
+        in: query
+        schema:
+          type: string
+        required: false
+        description: Search term against `name`.
+      - name: page
+        in: query
+        schema:
+          type: integer
+          default: 1
+          minimum: 1
+        required: false
+      - name: per
+        in: query
+        schema:
+          type: integer
+          default: 50
+          maximum: 500
+        required: false
+      - name: limit
+        in: query
+        schema:
+          type: integer
+          maximum: 500
+        required: false
+        description: Deprecated alias for `per` (transitional, for the unaudited Discord
+          bot).
+      - name: offset
+        in: query
+        schema:
+          type: integer
+          minimum: 0
+        required: false
+        description: Deprecated; converted to a page number (transitional, for the
+          unaudited Discord bot).
+      responses:
+        '200':
+          description: genres list
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  data:
+                    type: array
+                    items:
+                      type: object
+                      additionalProperties: true
+                  meta:
+                    "$ref": "#/components/schemas/PaginationMeta"
+        '401':
+          description: unauthenticated
+          content:
+            application/json:
+              schema:
+                "$ref": "#/components/schemas/Error"
+  "/api/v1/genres/{id}":
+    parameters:
+    - name: id
+      in: path
+      schema:
+        type: string
+      required: true
+      description: GamedbGenre id.
+    get:
+      summary: Show genre
+      tags:
+      - Genres
+      responses:
+        '200':
+          description: genre
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  data:
+                    type: object
+                    additionalProperties: true
+        '404':
+          description: genre not found
+          content:
+            application/json:
+              schema:
+                "$ref": "#/components/schemas/Error"
+        '401':
+          description: unauthenticated
+          content:
+            application/json:
+              schema:
+                "$ref": "#/components/schemas/Error"
   "/api/v1/gotm_entries":
     get:
       summary: List Game of the Month entries
@@ -2709,6 +3009,106 @@ paths:
             application/json:
               schema:
                 "$ref": "#/components/schemas/Error"
+  "/api/v1/modes":
+    get:
+      summary: List modes
+      tags:
+      - Modes
+      description: Returns the IGDB-curated game modes (single-player, co-operative,
+        ...). Supports `q` for case-insensitive name search.
+      parameters:
+      - name: q
+        in: query
+        schema:
+          type: string
+        required: false
+        description: Search term against `name`.
+      - name: page
+        in: query
+        schema:
+          type: integer
+          default: 1
+          minimum: 1
+        required: false
+      - name: per
+        in: query
+        schema:
+          type: integer
+          default: 50
+          maximum: 500
+        required: false
+      - name: limit
+        in: query
+        schema:
+          type: integer
+          maximum: 500
+        required: false
+        description: Deprecated alias for `per` (transitional, for the unaudited Discord
+          bot).
+      - name: offset
+        in: query
+        schema:
+          type: integer
+          minimum: 0
+        required: false
+        description: Deprecated; converted to a page number (transitional, for the
+          unaudited Discord bot).
+      responses:
+        '200':
+          description: modes list
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  data:
+                    type: array
+                    items:
+                      type: object
+                      additionalProperties: true
+                  meta:
+                    "$ref": "#/components/schemas/PaginationMeta"
+        '401':
+          description: unauthenticated
+          content:
+            application/json:
+              schema:
+                "$ref": "#/components/schemas/Error"
+  "/api/v1/modes/{id}":
+    parameters:
+    - name: id
+      in: path
+      schema:
+        type: string
+      required: true
+      description: GamedbGameModeDef id.
+    get:
+      summary: Show mode
+      tags:
+      - Modes
+      responses:
+        '200':
+          description: mode
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  data:
+                    type: object
+                    additionalProperties: true
+        '404':
+          description: mode not found
+          content:
+            application/json:
+              schema:
+                "$ref": "#/components/schemas/Error"
+        '401':
+          description: unauthenticated
+          content:
+            application/json:
+              schema:
+                "$ref": "#/components/schemas/Error"
   "/api/v1/gotm_entries/{round}/nominations":
     parameters:
     - name: round
@@ -3054,6 +3454,106 @@ paths:
                     additionalProperties: true
         '404':
           description: not found
+          content:
+            application/json:
+              schema:
+                "$ref": "#/components/schemas/Error"
+        '401':
+          description: unauthenticated
+          content:
+            application/json:
+              schema:
+                "$ref": "#/components/schemas/Error"
+  "/api/v1/perspectives":
+    get:
+      summary: List perspectives
+      tags:
+      - Perspectives
+      description: Returns the IGDB-curated player perspectives (first-person, top-down,
+        ...). Supports `q` for case-insensitive name search.
+      parameters:
+      - name: q
+        in: query
+        schema:
+          type: string
+        required: false
+        description: Search term against `name`.
+      - name: page
+        in: query
+        schema:
+          type: integer
+          default: 1
+          minimum: 1
+        required: false
+      - name: per
+        in: query
+        schema:
+          type: integer
+          default: 50
+          maximum: 500
+        required: false
+      - name: limit
+        in: query
+        schema:
+          type: integer
+          maximum: 500
+        required: false
+        description: Deprecated alias for `per` (transitional, for the unaudited Discord
+          bot).
+      - name: offset
+        in: query
+        schema:
+          type: integer
+          minimum: 0
+        required: false
+        description: Deprecated; converted to a page number (transitional, for the
+          unaudited Discord bot).
+      responses:
+        '200':
+          description: perspectives list
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  data:
+                    type: array
+                    items:
+                      type: object
+                      additionalProperties: true
+                  meta:
+                    "$ref": "#/components/schemas/PaginationMeta"
+        '401':
+          description: unauthenticated
+          content:
+            application/json:
+              schema:
+                "$ref": "#/components/schemas/Error"
+  "/api/v1/perspectives/{id}":
+    parameters:
+    - name: id
+      in: path
+      schema:
+        type: string
+      required: true
+      description: GamedbPerspective id.
+    get:
+      summary: Show perspective
+      tags:
+      - Perspectives
+      responses:
+        '200':
+          description: perspective
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  data:
+                    type: object
+                    additionalProperties: true
+        '404':
+          description: perspective not found
           content:
             application/json:
               schema:
@@ -6083,6 +6583,106 @@ paths:
                 "$ref": "#/components/schemas/DeletedResponse"
         '404':
           description: not found
+          content:
+            application/json:
+              schema:
+                "$ref": "#/components/schemas/Error"
+        '401':
+          description: unauthenticated
+          content:
+            application/json:
+              schema:
+                "$ref": "#/components/schemas/Error"
+  "/api/v1/themes":
+    get:
+      summary: List themes
+      tags:
+      - Themes
+      description: Returns the IGDB-curated game themes. Supports `q` for case-insensitive
+        name search.
+      parameters:
+      - name: q
+        in: query
+        schema:
+          type: string
+        required: false
+        description: Search term against `name`.
+      - name: page
+        in: query
+        schema:
+          type: integer
+          default: 1
+          minimum: 1
+        required: false
+      - name: per
+        in: query
+        schema:
+          type: integer
+          default: 50
+          maximum: 500
+        required: false
+      - name: limit
+        in: query
+        schema:
+          type: integer
+          maximum: 500
+        required: false
+        description: Deprecated alias for `per` (transitional, for the unaudited Discord
+          bot).
+      - name: offset
+        in: query
+        schema:
+          type: integer
+          minimum: 0
+        required: false
+        description: Deprecated; converted to a page number (transitional, for the
+          unaudited Discord bot).
+      responses:
+        '200':
+          description: themes list
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  data:
+                    type: array
+                    items:
+                      type: object
+                      additionalProperties: true
+                  meta:
+                    "$ref": "#/components/schemas/PaginationMeta"
+        '401':
+          description: unauthenticated
+          content:
+            application/json:
+              schema:
+                "$ref": "#/components/schemas/Error"
+  "/api/v1/themes/{id}":
+    parameters:
+    - name: id
+      in: path
+      schema:
+        type: string
+      required: true
+      description: GamedbTheme id.
+    get:
+      summary: Show theme
+      tags:
+      - Themes
+      responses:
+        '200':
+          description: theme
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  data:
+                    type: object
+                    additionalProperties: true
+        '404':
+          description: theme not found
           content:
             application/json:
               schema:
