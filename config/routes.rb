@@ -56,6 +56,9 @@ Rails.application.routes.draw do
           post "journal", to: "journal#create"
           get "reminders", to: "reminders#index"
           post "reminders", to: "reminders#create"
+          get "presence_prompts", to: "presence_prompts#index"
+          get "presence_prompt_opts", to: "presence_prompt_opts#show"
+          put "presence_prompt_opts", to: "presence_prompt_opts#update"
           get "game_keys", to: "game_keys#user_index"
         end
       end
