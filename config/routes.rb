@@ -77,6 +77,13 @@ Rails.application.routes.draw do
       resources :release_announcements, only: %i[show create update destroy] do
         member { post "skip" }
       end
+      resources :threads, only: %i[show create update] do
+        member do
+          post "links", to: "thread_game_links#create"
+          delete "links", to: "thread_game_links#destroy_all"
+          delete "links/:game_id", to: "thread_game_links#destroy"
+        end
+      end
       resources :gotm_entries, only: %i[index show]
       resources :nr_gotm_entries, only: %i[index show]
       get "gotm_entries/:round/nominations", to: "nominations#gotm", as: :gotm_entry_nominations
