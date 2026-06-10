@@ -34,6 +34,12 @@ Rails.application.routes.draw do
 
       resources :platforms, only: %i[index show]
       resources :regions, only: %i[index show]
+      resources :genres, only: %i[index show]
+      resources :themes, only: %i[index show]
+      resources :perspectives, only: %i[index show]
+      resources :modes, only: %i[index show]
+      resources :franchises, only: %i[index show]
+      resources :companies, only: %i[index show]
 
       resources :users, param: :user_id, only: %i[index show] do
         member do
