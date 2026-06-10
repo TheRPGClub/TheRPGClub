@@ -72,6 +72,7 @@ Rails.application.routes.draw do
         member do
           post "claim", to: "game_keys#claim"
         end
+      end
       resources :release_announcements, only: %i[show create update destroy] do
         member { post "skip" }
       end
