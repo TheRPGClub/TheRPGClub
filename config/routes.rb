@@ -27,6 +27,7 @@ Rails.application.routes.draw do
           get "completions", to: "completions#game_index"
           get "reviews", to: "reviews#game_index"
           get "journal", to: "journal#game_index"
+          get "release_announcements", to: "release_announcements#game_index"
         end
       end
 
@@ -71,6 +72,8 @@ Rails.application.routes.draw do
         member do
           post "claim", to: "game_keys#claim"
         end
+      resources :release_announcements, only: %i[show create update destroy] do
+        member { post "skip" }
       end
       resources :gotm_entries, only: %i[index show]
       resources :nr_gotm_entries, only: %i[index show]
@@ -84,6 +87,9 @@ Rails.application.routes.draw do
       resources :public_reminders, only: %i[index show create update destroy]
       resources :starboard, param: :message_id, only: %i[index show create update destroy]
       resources :voting_info, only: %i[index show create update destroy]
+      resources :search_synonyms, only: %i[index show create update destroy]
+      resources :search_synonym_groups, only: %i[index show create update destroy]
+      resources :search_synonym_drafts, only: %i[index show create update destroy]
     end
   end
 end
