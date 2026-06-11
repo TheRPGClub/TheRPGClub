@@ -16,20 +16,20 @@ module Api
 
       # GET /api/v1/journal_message_contexts/:message_id
       def show
-        render json: { data: find_context.as_json }
+        render json: { data: JournalMessageContextResource.new(find_context).serializable_hash }
       end
 
       # POST /api/v1/journal_message_contexts
       def create
         record = JournalMessageContext.create!(request_data)
-        render json: { data: record.as_json }, status: :created
+        render json: { data: JournalMessageContextResource.new(record).serializable_hash }, status: :created
       end
 
       # PATCH /PUT /api/v1/journal_message_contexts/:message_id
       def update
         record = find_context
         record.update!(request_data)
-        render json: { data: record.as_json }
+        render json: { data: JournalMessageContextResource.new(record).serializable_hash }
       end
 
       # DELETE /api/v1/journal_message_contexts/:message_id
