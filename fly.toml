@@ -1,10 +1,10 @@
-# fly.toml app configuration file generated for therpgclub on 2026-05-08T10:46:54Z
+# fly.toml app configuration file generated for therpgclub on 2026-06-11T21:51:24Z
 #
 # See https://fly.io/docs/reference/configuration/ for information about how to use this file.
 #
 
 app = 'therpgclub'
-primary_region = 'iad'
+primary_region = 'jnb'
 console_command = '/rails/bin/rails console'
 
 [build]
